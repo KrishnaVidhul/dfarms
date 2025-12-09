@@ -1,86 +1,61 @@
 jsx
 import React, { useState } from 'react';
-import { MicIcon, StopCircleIcon } from 'lucide-react';
+import { Mic2 } from 'lucide-react';
 
 const VoiceToTextLogging = () => {
-  const [isRecording, setIsRecording] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+  const startListening = async () => {
+    if ('webkitSpeechRecognition' in window) {
+      const recognition = new webkitSpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
 
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          const audioBlob = event.data;
-          // Convert the audio blob to text using a speech-to-text service
-          convertAudioToText(audioBlob);
-        }
+      recognition.onresult = (event) => {
+        setTranscript(event.results[0][0].transcript);
       };
 
-      mediaRecorder.onstop = () => {
-        setIsRecording(false);
+      recognition.onerror = (error) => {
+        console.error('Error:', error.message);
       };
 
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (error) {
-      console.error('Error accessing microphone:', error);
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+    } else {
+      alert('Sorry, your browser does not support speech recognition.');
     }
   };
 
-  const stopRecording = () => {
-    if (isRecording) {
-      mediaRecorder.stop();
-    }
-  };
-
-  const convertAudioToText = (audioBlob) => {
-    // Use a speech-to-text service like Web Speech API or a third-party service
-    const reader = new FileReader();
-    reader.onloadstart = () => console.log('Reading file...');
-    reader.onloadend = async () => {
-      const audioDataUrl = reader.result;
-      // Convert the audio data URL to text using a speech-to-text service
-      // Example: Using Web Speech API
-      if ('webkitSpeechRecognition' in window) {
-        const recognition = new webkitSpeechRecognition();
-        recognition.onresult = (event) => {
-          setTranscript(event.results[0][0].transcript);
-        };
-        recognition.onerror = (event) => {
-          console.error('Recognition error:', event);
-        };
-        recognition.start();
-      } else {
-        console.error('Web Speech API not supported');
-      }
-    };
-    reader.readAsDataURL(audioBlob);
+  const stopListening = () => {
+    setIsListening(false);
   };
 
   return (
-    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-      <h2 className="text-xl font-bold mb-4 text-black dark:text-white">Voice-to-Text Procurement Logging</h2>
-      <div className="flex items-center justify-between">
-        {isRecording ? (
-          <StopCircleIcon
-            onClick={stopRecording}
-            className="w-8 h-8 text-red-500 cursor-pointer"
-          />
+    <div className="p-4 bg-zinc-800 text-white rounded-md shadow-lg">
+      <h2 className="text-xl font-bold mb-3">Voice-to-Text Procurement Logging</h2>
+      <button
+        onClick={isListening ? stopListening : startListening}
+        className={`flex items-center justify-center w-full py-2 px-4 bg-teal-500 text-white rounded-md transition-colors ${
+          isListening ? 'bg-teal-700' : ''
+        }`}
+      >
+        {isListening ? (
+          <span>Stop Listening</span>
         ) : (
-          <MicIcon
-            onClick={startRecording}
-            className="w-8 h-8 text-blue-500 cursor-pointer"
-          />
+          <>
+            <Mic2 className="mr-2 h-4 w-4" />
+            <span>Start Listening</span>
+          </>
         )}
+      </button>
+      <div className="mt-4 bg-zinc-700 rounded-lg p-3">
+        <p>{transcript}</p>
       </div>
-      {transcript && (
-        <div className="mt-4 bg-gray-100 dark:bg-gray-700 p-2 rounded-md">
-          <p className="text-base font-medium text-black dark:text-white">{transcript}</p>
-        </div>
-      )}
     </div>
   );
 };
