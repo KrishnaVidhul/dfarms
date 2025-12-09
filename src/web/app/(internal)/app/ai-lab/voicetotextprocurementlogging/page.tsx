@@ -1,78 +1,82 @@
 // @ts-nocheck
 'use client';
-
-import { Button } from 'react';
-import { Activity, Circle, User } from 'lucide-react';
-import { clsx } from 'clsx';
+import { Activity } from 'lucide-react';
 import { useState } from 'react';
+import { clsx } from 'clsx';
 
-const mockLogs = [
-  { id: 1, date: '2024-09-01', log: 'Ordered 100 seeds' },
-  { id: 2, date: '2024-09-05', log: 'Received 50 seeds' },
-  { id: 3, date: '2024-09-10', log: 'Planted 20 seeds' },
+const procurementLogs = [
+  {
+    id: 1,
+    date: '2024-09-16',
+    time: '10:00 AM',
+    log: 'Ordered 100 seeds',
+  },
+  {
+    id: 2,
+    date: '2024-09-17',
+    time: '11:00 AM',
+    log: 'Received 50 fertilizers',
+  },
+  {
+    id: 3,
+    date: '2024-09-18',
+    time: '12:00 PM',
+    log: 'Purchased 200 pesticides',
+  },
 ];
 
 export default function Page() {
-  const [logs, setLogs] = useState(mockLogs);
   const [newLog, setNewLog] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
+  const [logs, setLogs] = useState(procurementLogs);
 
-  const handleRecord = () => {
-    setIsRecording(true);
-    // simulate voice-to-text recording
-    setTimeout(() => {
-      setIsRecording(false);
-      setNewLog('New log recorded');
-    }, 2000);
+  const handleVoiceToText = () => {
+    // Mock voice-to-text functionality
+    setNewLog('New log added via voice-to-text');
   };
 
   const handleAddLog = () => {
     if (newLog) {
-      setLogs([...logs, { id: logs.length + 1, date: new Date().toISOString().split('T')[0], log: newLog }]);
+      setLogs([...logs, { id: logs.length + 1, date: '2024-09-19', time: '01:00 PM', log: newLog }]);
       setNewLog('');
     }
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 bg-gray-800 rounded-lg shadow-md">
-      <h2 className="text-lg font-medium text-gray-200 mb-4">Voice-to-Text Procurement Logging</h2>
+    <div className="p-4 bg-gray-800 rounded-md shadow-md">
+      <h2 className="text-lg font-bold text-gray-200 mb-4">Voice-to-Text Procurement Logging</h2>
       <div className="flex justify-between mb-4">
-        <Button
+        <button
           className={clsx(
-            'bg-orange-500 hover:bg-orange-600 text-gray-200 py-2 px-4 rounded-lg',
-            isRecording ? 'opacity-50 cursor-not-allowed' : ''
+            'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded',
+            'transition duration-200 ease-in-out'
           )}
-          onClick={handleRecord}
-          disabled={isRecording}
+          onClick={handleVoiceToText}
         >
-          <Activity className="mr-2" size={20} />
-          Record Log
-        </Button>
-        <Button
-          className="bg-green-500 hover:bg-green-600 text-gray-200 py-2 px-4 rounded-lg"
-          onClick={handleAddLog}
-        >
-          <Circle className="mr-2" size={20} />
-          Add Log
-        </Button>
-      </div>
-      <div className="mb-4">
+          <Activity size={20} className="mr-2" />
+          Voice-to-Text
+        </button>
         <input
           type="text"
           value={newLog}
           onChange={(e) => setNewLog(e.target.value)}
-          className="w-full p-2 pl-10 text-gray-200 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-200"
-          placeholder="New log"
+          className="bg-gray-700 text-gray-200 py-2 px-4 rounded-md w-full"
+          placeholder="Type or speak your log"
         />
+        <button
+          className={clsx(
+            'bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded',
+            'transition duration-200 ease-in-out'
+          )}
+          onClick={handleAddLog}
+        >
+          Add Log
+        </button>
       </div>
-      <h3 className="text-lg font-medium text-gray-200 mb-4">Logs</h3>
       <ul>
         {logs.map((log) => (
-          <li key={log.id} className="py-2 px-4 bg-gray-700 rounded-lg mb-2">
-            <div className="flex justify-between">
-              <span className="text-gray-200">{log.log}</span>
-              <span className="text-gray-400">{log.date}</span>
-            </div>
+          <li key={log.id} className="bg-gray-700 py-2 px-4 rounded-md mb-2">
+            <p className="text-gray-200">{log.log}</p>
+            <p className="text-gray-500 text-sm">{log.date} {log.time}</p>
           </li>
         ))}
       </ul>
