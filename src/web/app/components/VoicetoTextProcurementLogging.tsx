@@ -1,87 +1,72 @@
 jsx
 import React, { useState } from 'react';
-import LucideVoice as VoiceIcon from 'lucide-react/LucideVoice';
-import { Switch } from '@headlessui/react';
+import { LucideMicrophone2 } from 'lucide-react';
+import './VoiceToTextProcurement.css';
 
-const VoiceToTextLogging = () => {
-  const [isRecording, setIsRecording] = useState(false);
+const VoiceToTextProcurement = () => {
+  const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
 
-  const startRecording = async () => {
-    try {
-      if (typeof window.MediaRecorder === 'undefined') {
-        throw new Error('MediaRecorder API not supported');
-      }
+  const startListening = async () => {
+    if ('webkitSpeechRecognition' in window) {
+      const recognition = new webkitSpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-
-      let audioChunks = [];
-
-      mediaRecorder.ondataavailable = event => {
-        audioChunks.push(event.data);
+      recognition.onresult = (event) => {
+        setTranscript(event.results[0][0].transcript);
       };
 
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const dataUrl = reader.result;
-          fetch('/api/transcribe', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ audioData: dataUrl })
-          }).then(response => response.json()).then(data => {
-            setTranscript(data.transcript);
-          });
-        };
-        reader.readAsDataURL(audioBlob);
+      recognition.onerror = (event) => {
+        if (event.error === 'aborted') return;
+        console.log(event.error, event.message);
       };
 
-      mediaRecorder.start();
-      setIsRecording(true);
-
-      return () => {
-        mediaRecorder.stop();
-        stream.getTracks().forEach(track => track.stop());
-      };
-    } catch (error) {
-      console.error('Error starting recording:', error);
+      recognition.start();
+      setIsListening(true);
+    } else {
+      alert('Your browser does not support voice recognition.');
     }
   };
 
-  const toggleRecording = () => {
-    if (isRecording) {
-      startRecording();
-    } else {
-      setIsRecording(false);
-    }
+  const stopListening = () => {
+    setIsListening(false);
   };
 
   return (
-    <div className="bg-[#121313] p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow dark:bg-[#1e1f20]">
-      <h2 className="text-xl font-bold mb-4 text-white">Voice-to-Text Procurement Logging</h2>
-      <div className="flex items-center justify-between">
-        <button
-          onClick={toggleRecording}
-          className={`bg-[#3b82f6] hover:bg-[#2563eb] text-white py-2 px-4 rounded-lg focus:outline-none transition-colors ${isRecording ? 'bg-[#1e1f20]' : ''}`}
-        >
-          <VoiceIcon className="mr-2" />
-          {isRecording ? 'Stop Recording' : 'Start Recording'}
-        </button>
-        {transcript && (
-          <div className="text-gray-300 text-sm">
-            <p>Transcript:</p>
-            <pre className="bg-[#1e1f20] p-2 rounded-lg overflow-auto max-h-48 shadow-inner">
-              {transcript}
-            </pre>
-          </div>
+    <div className="p-4 bg-dark-mode rounded-lg shadow-md">
+      <h3 className="text-xl font-bold mb-2">Voice-to-Text Procurement Logging</h3>
+      <button
+        onClick={isListening ? stopListening : startListening}
+        className={`flex items-center px-4 py-2 rounded-full text-white ${
+          isListening ? 'bg-red-500' : 'bg-green-500'
+        }`}
+      >
+        {isListening ? (
+          <LucideMicrophone2 className="mr-2" />
+        ) : (
+          <LucideMicrophone2 className="mr-2 rotate-180" />
         )}
+        {isListening ? 'Stop' : 'Start'}
+      </button>
+      <div className="mt-4 p-3 border rounded-lg bg-gray-700">
+        <pre className="text-white">{transcript}</pre>
       </div>
     </div>
   );
 };
 
-export default VoiceToTextLogging;
+export default VoiceToTextProcurement;
+
+
+css
+/* VoiceToTextProcurement.css */
+body {
+  background-color: #121212;
+  color: white;
+}
+
+.bg-dark-mode {
+  background-color: #1e1e1e;
+}
