@@ -1,70 +1,69 @@
 // @ts-nocheck
-import { clsx } from 'clsx';
-import { Activity, Circle } from 'lucide-react';
-import { useState } from 'react';
-
 'use client';
 
-const mockLogs = [
-  { id: 1, date: '2024-09-16', text: 'Procured 100 units of fertilizer' },
-  { id: 2, date: '2024-09-17', text: 'Purchased 50 units of seeds' },
-  { id: 3, date: '2024-09-18', text: 'Sold 200 units of produce' },
+import { useState } from 'react';
+import { Activity } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+
+const data = [
+  { name: 'Jan', uv: 4000, pv: 2400, amt: 2400 },
+  { name: 'Feb', uv: 3000, pv: 1398, amt: 2210 },
+  { name: 'Mar', uv: 2000, pv: 9800, amt: 2290 },
+  { name: 'Apr', uv: 2780, pv: 3908, amt: 2000 },
+  { name: 'May', uv: 1890, pv: 4800, amt: 2181 },
+  { name: 'Jun', uv: 2390, pv: 3800, amt: 2500 },
+  { name: 'Jul', uv: 3490, pv: 4300, amt: 2100 },
 ];
 
 export default function Page() {
-  const [logs, setLogs] = useState(mockLogs);
-  const [newLog, setNewLog] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
+  const [logText, setLogText] = useState('');
+  const [logHistory, setLogHistory] = useState([]);
 
-  const handleStartRecording = () => {
-    setIsRecording(true);
-  };
-
-  const handleStopRecording = () => {
-    setIsRecording(false);
-  };
-
-  const handleAddLog = () => {
-    if (newLog) {
-      setLogs([...logs, { id: logs.length + 1, date: '2024-09-19', text: newLog }]);
-      setNewLog('');
-    }
+  const handleSpeechToText = () => {
+    const speech = new webkitSpeechRecognition() || new SpeechRecognition();
+    speech.lang = 'en-US';
+    speech.maxResults = 10;
+    speech.onresult = (event) => {
+      const speechText = event.results[0][0].transcript;
+      setLogText(speechText);
+      setLogHistory((prevHistory) => [...prevHistory, speechText]);
+    };
+    speech.start();
   };
 
   return (
-    <div className="flex flex-col p-4 bg-gray-800 rounded-md">
-      <h2 className="text-lg font-bold text-white mb-4">Voice-to-Text Procurement Logging</h2>
-      <div className="flex justify-between items-center mb-4">
+    <div className="p-4 bg-gray-800 rounded-md">
+      <h1 className="text-2xl font-bold text-white mb-4">Voice-to-Text Procurement Logging</h1>
+      <div className="flex justify-center mb-4">
         <button
-          className={clsx(
-            'px-4 py-2 bg-green-500 text-white rounded-md',
-            isRecording ? 'bg-green-300' : 'bg-green-500'
-          )}
-          onClick={isRecording ? handleStopRecording : handleStartRecording}
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          onClick={handleSpeechToText}
         >
-          {isRecording ? <Circle size={20} /> : <Activity size={20} />} {isRecording ? 'Stop Recording' : 'Start Recording'}
-        </button>
-        <input
-          type="text"
-          value={newLog}
-          onChange={(e) => setNewLog(e.target.value)}
-          placeholder="Type or record log"
-          className="w-full p-2 pl-10 text-sm text-gray-700 bg-gray-200 rounded-md"
-        />
-        <button
-          className="px-4 py-2 bg-blue-500 text-white rounded-md"
-          onClick={handleAddLog}
-        >
-          Add Log
+          <Activity size={20} className="mr-2" />
+          Start Logging
         </button>
       </div>
-      <div className="flex flex-col">
-        {logs.map((log) => (
-          <div key={log.id} className="flex justify-between items-center py-2 border-b border-gray-600">
-            <span className="text-gray-200">{log.date}</span>
-            <span className="text-gray-200">{log.text}</span>
-          </div>
-        ))}
+      <div className="mb-4">
+        <h2 className="text-lg font-bold text-white mb-2">Log Text:</h2>
+        <p className="text-white">{logText}</p>
+      </div>
+      <div className="mb-4">
+        <h2 className="text-lg font-bold text-white mb-2">Log History:</h2>
+        <ul>
+          {logHistory.map((log, index) => (
+            <li key={index} className="text-white mb-2">{log}</li>
+          ))}
+        </ul>
+      </div>
+      <div className="bg-gray-700 p-4 rounded-md">
+        <LineChart width={600} height={300} data={data}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip />
+          <Line type="monotone" dataKey="pv" stroke="#8884d8" activeDot={{ r: 8 }} />
+          <Line type="monotone" dataKey="uv" stroke="#82ca9d" />
+        </LineChart>
       </div>
     </div>
   );
