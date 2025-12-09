@@ -1,69 +1,100 @@
-import React, { useState } from "react";
-import { Mic2 } from 'lucide-react';
-import { useTheme } from "next-themes";
+jsx
+import React, { useState } from 'react';
+import { Mic2, MicOff } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
-const VoiceToTextProcurement = () => {
-  const [transcription, setTranscription] = useState('');
+const VoiceToTextLogging = () => {
   const { theme } = useTheme();
+  const [isRecording, setIsRecording] = useState(false);
+  const [transcript, setTranscript] = useState('');
 
-  const handleVoiceCommand = async (e) => {
-    e.preventDefault();
-    
+  const handleStartRecording = async () => {
+    if (typeof window.MediaRecorder === 'undefined') {
+      alert('Your browser does not support media recording.');
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      
-      let chunks = [];
-      mediaRecorder.ondataavailable = event => chunks.push(event.data);
+      const recorder = new MediaRecorder(stream);
 
-      mediaRecorder.onstop = async () => {
-        const blob = new Blob(chunks, { type: 'audio/wav' });
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-          try {
-            const response = await fetch('https://api.speech-to-text.com/endpoint', {
+      recorder.ondataavailable = event => {
+        if (event.data.size > 0) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const audioData = reader.result;
+            // Convert audio data to text using a transcription API
+            fetch('https://api.example.com/transcribe', {
               method: 'POST',
               headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
               },
-              body: JSON.stringify({ audioData: reader.result.split(',')[1] })
+              body: JSON.stringify({ audioData }),
+            })
+            .then(response => response.json())
+            .then(data => {
+              setTranscript(prevTranscript => prevTranscript + data.text);
             });
-            const result = await response.json();
-            setTranscription(result.text);
-          } catch (error) {
-            console.error('Error transcribing:', error);
-          }
-        };
-        reader.readAsDataURL(blob);
+          };
+          reader.readAsDataURL(event.data);
+        }
       };
 
-      mediaRecorder.start();
+      recorder.onstop = () => {
+        setIsRecording(false);
+      };
 
-      setTimeout(() => {
-        mediaRecorder.stop();
-      }, 5000); // Stop after 5 seconds
-    } catch (err) {
-      console.error("The following gUM error occurred: " + err);
+      recorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
     }
-  }
+  };
+
+  const handleStopRecording = () => {
+    if (!isRecording) return;
+
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        const mediaSource = new MediaSource();
+        const videoElement = document.createElement('video');
+        videoElement.src = URL.createObjectURL(mediaSource);
+        mediaSource.addEventListener('sourceopen', () => {
+          const sourceBuffer = mediaSource.addSourceBuffer('audio/mp4; codecs="mp4a.40.2"');
+          stream.getTracks().forEach(track => track.stop());
+          sourceBuffer.appendBuffer(new Uint8Array(0));
+        });
+      })
+      .catch(error => {
+        console.error('Error accessing microphone:', error);
+      });
+
+    setIsRecording(false);
+  };
 
   return (
-    <div className={`bg-${theme === 'dark' ? 'gray-900' : 'white'} text-${theme === 'dark' ? 'white' : 'black'} rounded-lg shadow-md p-6 flex items-center justify-between`}>
+    <div className={`bg-[${theme === 'dark' ? '#121212' : '#ffffff'}] text-white p-4 rounded-lg shadow-md relative`}>
       <button
-        onClick={handleVoiceCommand}
-        className="bg-${theme === 'dark' ? 'blue-500' : 'blue-200'} hover:bg-${theme === 'dark' ? 'blue-700' : 'blue-300'} text-white font-semibold py-2 px-4 rounded"
+        onClick={isRecording ? handleStopRecording : handleStartRecording}
+        className="flex items-center space-x-2 px-4 py-2 bg-[${theme === 'dark' ? '#333333' : '#e0e0e0'}] text-white rounded-full hover:bg-opacity-80 transition"
       >
-        <Mic2 className="mr-2" />
-        Voice Command
+        {isRecording ? (
+          <MicOff className="w-5 h-5" />
+        ) : (
+          <Mic2 className="w-5 h-5" />
+        )}
+        {isRecording ? 'Stop Recording' : 'Start Recording'}
       </button>
-      {transcription && (
-        <div className="flex flex-col">
-          <span className="text-gray-500">Transcription:</span>
-          <p>{transcription}</p>
+      {transcript && (
+        <div className="mt-4">
+          <h3 className="text-lg font-bold mb-2">Transcription</h3>
+          <p className="bg-[${theme === 'dark' ? '#282c34' : '#f0f0f0'}] p-4 rounded-lg shadow-md text-sm">
+            {transcript}
+          </p>
         </div>
       )}
     </div>
   );
-}
+};
 
-export default VoiceToTextProcurement;
+export default VoiceToTextLogging;
