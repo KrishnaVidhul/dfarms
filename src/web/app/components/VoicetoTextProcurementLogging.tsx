@@ -1,64 +1,55 @@
+jsx
 import React, { useState } from 'react';
-import { MicIcon } from 'lucide-react';
+import { LuMicrophone2 } from 'lucide-react';
 
-const VoiceToTextLogging = () => {
-  const [isListening, setIsListening] = useState(false);
+const VoiceToTextProcurement = () => {
   const [transcript, setTranscript] = useState('');
 
-  const startListening = async () => {
-    if ('webkitSpeechRecognition' in window) {
-      const recognition = new webkitSpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = 'en-US';
-
-      recognition.onresult = (event) => {
-        setTranscript(event.results[0][0].transcript);
-      };
-
-      recognition.onerror = (event) => {
-        console.error('Speech recognition error:', event.error);
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      recognition.start();
-      setIsListening(true);
-    } else {
-      alert('Your browser does not support speech recognition.');
+  const handleVoiceCommand = async () => {
+    if (!('webkitSpeechRecognition' in window)) {
+      alert('Web Speech API is not supported by your browser.');
+      return;
     }
-  };
 
-  const handleKeyPress = (event) => {
-    if (event.key === 'Enter') {
-      startListening();
-    }
+    const recognition = new webkitSpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onresult = (event) => {
+      const text = event.results[0][0].transcript;
+      setTranscript(text);
+      // Here you can add the logic to process the voice command and log it
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Error occurred: ', event.error);
+    };
+
+    recognition.onend = () => {
+      console.log('Speech recognition service disconnected');
+    };
+
+    recognition.start();
   };
 
   return (
-    <div className="bg-[#1e293b] p-6 rounded-lg shadow-md">
-      <h2 className="text-xl font-bold mb-4">Voice-to-Text Procurement Logging</h2>
-      <textarea
-        value={transcript}
-        onChange={(e) => setTranscript(e.target.value)}
-        placeholder="Type or speak your procurement details here..."
-        className="w-full p-2 text-white bg-[#374151] rounded-lg shadow-sm focus:outline-none"
-        onKeyPress={handleKeyPress}
-      />
+    <div className="bg-gray-900 text-white p-4 rounded-md shadow-lg">
+      <h2 className="text-xl font-bold mb-2">Voice-to-Text Procurement Logging</h2>
       <button
-        onClick={startListening}
-        disabled={isListening}
-        className={`mt-4 py-2 px-4 font-semibold rounded-lg ${
-          isListening ? 'bg-[#4b5563] pointer-events-none' : 'bg-[#5f7280]'
-        }`}
+        onClick={handleVoiceCommand}
+        className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md flex items-center justify-center"
       >
-        {isListening ? <MicIcon className="mr-2" /> : ''}
-        {isListening ? 'Listening...' : 'Start Listening'}
+        <LuMicrophone2 className="mr-2" />
+        Record Voice Command
       </button>
+      {transcript && (
+        <div className="mt-4 bg-gray-800 p-3 rounded-lg">
+          <p>Transcript:</p>
+          <pre>{transcript}</pre>
+        </div>
+      )}
     </div>
   );
 };
 
-export default VoiceToTextLogging;
+export default VoiceToTextProcurement;
