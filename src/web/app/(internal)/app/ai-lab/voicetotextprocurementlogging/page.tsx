@@ -1,64 +1,59 @@
 // @ts-nocheck
+import { useState } from 'react';
+import { Activity } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+
 'use client';
 
-import { Activity } from 'lucide-react';
-import { useState } from 'react';
-import { clsx } from 'clsx';
-
-const mockLogs = [
-  { id: 1, text: 'Procurement log 1', timestamp: '2024-01-01T12:00:00' },
-  { id: 2, text: 'Procurement log 2', timestamp: '2024-01-02T12:00:00' },
-  { id: 3, text: 'Procurement log 3', timestamp: '2024-01-03T12:00:00' },
+const procurementData = [
+  { name: 'Jan', quantity: 100 },
+  { name: 'Feb', quantity: 120 },
+  { name: 'Mar', quantity: 140 },
+  { name: 'Apr', quantity: 160 },
+  { name: 'May', quantity: 180 },
 ];
 
 export default function Page() {
-  const [logs, setLogs] = useState(mockLogs);
-  const [newLog, setNewLog] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
+  const [speechText, setSpeechText] = useState('');
+  const [logHistory, setLogHistory] = useState([]);
 
-  const handleStartRecording = () => {
-    setIsRecording(true);
-  };
-
-  const handleStopRecording = () => {
-    setIsRecording(false);
-    setLogs([...logs, { id: logs.length + 1, text: newLog, timestamp: new Date().toISOString() }]);
-    setNewLog('');
-  };
-
-  const handleSpeechInput = (event) => {
-    setNewLog(event.target.value);
+  const handleSpeech = () => {
+    const recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.maxResults = 10;
+    recognition.onresult = (event) => {
+      const speechResult = event.results[0][0].transcript;
+      setSpeechText(speechResult);
+      setLogHistory((prevHistory) => [...prevHistory, speechResult]);
+    };
+    recognition.start();
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4 bg-gray-800 rounded-lg">
-      <h2 className="text-lg font-bold text-white">Voice-to-Text Procurement Logging</h2>
-      <div className="flex gap-2">
-        <button
-          className={clsx('px-4 py-2 rounded-lg', isRecording ? 'bg-green-500' : 'bg-blue-500')}
-          onClick={isRecording ? handleStopRecording : handleStartRecording}
-        >
-          {isRecording ? 'Stop Recording' : 'Start Recording'}
-        </button>
-        <input
-          type="text"
-          value={newLog}
-          onChange={handleSpeechInput}
-          placeholder="Type or speak your log"
-          className="w-full p-2 rounded-lg bg-gray-700 text-white"
-        />
-      </div>
-      <div className="flex flex-col gap-2">
-        {logs.map((log) => (
-          <div key={log.id} className="flex gap-2 p-2 bg-gray-700 rounded-lg">
-            <Activity size={20} className="text-white" />
-            <div className="flex flex-col">
-              <span className="text-white">{log.text}</span>
-              <span className="text-gray-500 text-sm">{log.timestamp}</span>
-            </div>
-          </div>
+    <div className="flex flex-col items-center justify-center h-screen p-4 bg-gray-900">
+      <h1 className="text-3xl font-bold text-white mb-4">Voice-to-Text Procurement Logging</h1>
+      <button
+        className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded mb-4"
+        onClick={handleSpeech}
+      >
+        <Activity size={20} className="mr-2" />
+        Start Speaking
+      </button>
+      <p className="text-lg text-white mb-4">Spoken Text: {speechText}</p>
+      <h2 className="text-2xl font-bold text-white mb-4">Procurement Log History</h2>
+      <ul className="list-none mb-4">
+        {logHistory.map((log, index) => (
+          <li key={index} className="text-lg text-white mb-2">{log}</li>
         ))}
-      </div>
+      </ul>
+      <h2 className="text-2xl font-bold text-white mb-4">Procurement Quantity Chart</h2>
+      <BarChart width={500} height={300} data={procurementData}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="name" />
+        <YAxis />
+        <Tooltip />
+        <Bar dataKey="quantity" fill="#8884d8" />
+      </BarChart>
     </div>
   );
 }
