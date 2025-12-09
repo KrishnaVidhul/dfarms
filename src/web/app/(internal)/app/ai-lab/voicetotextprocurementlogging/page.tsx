@@ -1,86 +1,64 @@
 // @ts-nocheck
+'use client';
+
 import { Activity } from 'lucide-react';
 import { useState } from 'react';
 import { clsx } from 'clsx';
 
-'use client';
-
-const procurementLogs = [
-  { id: 1, date: '2024-01-01', description: 'Procured seeds for corn', quantity: 100 },
-  { id: 2, date: '2024-01-05', description: 'Procured fertilizers for wheat', quantity: 50 },
-  { id: 3, date: '2024-01-10', description: 'Procured pesticides for soybean', quantity: 200 },
+const mockLogs = [
+  { id: 1, text: 'Procurement log 1', timestamp: '2024-01-01T12:00:00' },
+  { id: 2, text: 'Procurement log 2', timestamp: '2024-01-02T12:00:00' },
+  { id: 3, text: 'Procurement log 3', timestamp: '2024-01-03T12:00:00' },
 ];
 
 export default function Page() {
-  const [logs, setLogs] = useState(procurementLogs);
-  const [newLog, setNewLog] = useState({ date: '', description: '', quantity: 0 });
+  const [logs, setLogs] = useState(mockLogs);
+  const [newLog, setNewLog] = useState('');
   const [isRecording, setIsRecording] = useState(false);
 
-  const handleRecord = () => {
+  const handleStartRecording = () => {
     setIsRecording(true);
-    // simulate voice-to-text recording
-    setTimeout(() => {
-      setIsRecording(false);
-      setNewLog({ date: '2024-01-15', description: 'Procured equipment for farming', quantity: 1 });
-    }, 2000);
   };
 
-  const handleAddLog = () => {
-    setLogs([...logs, newLog]);
-    setNewLog({ date: '', description: '', quantity: 0 });
+  const handleStopRecording = () => {
+    setIsRecording(false);
+    setLogs([...logs, { id: logs.length + 1, text: newLog, timestamp: new Date().toISOString() }]);
+    setNewLog('');
+  };
+
+  const handleSpeechInput = (event) => {
+    setNewLog(event.target.value);
   };
 
   return (
-    <div className="p-4 bg-gray-800 rounded-md">
-      <h2 className="text-lg font-bold text-white mb-4">Voice-to-Text Procurement Logging</h2>
-      <button
-        className={clsx(
-          'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded',
-          isRecording ? 'opacity-50 cursor-not-allowed' : ''
-        )}
-        onClick={handleRecord}
-        disabled={isRecording}
-      >
-        {isRecording ? <Activity className="mr-2" /> : <Activity className="mr-2" />} Record
-      </button>
-      <div className="mt-4">
+    <div className="flex flex-col gap-4 p-4 bg-gray-800 rounded-lg">
+      <h2 className="text-lg font-bold text-white">Voice-to-Text Procurement Logging</h2>
+      <div className="flex gap-2">
+        <button
+          className={clsx('px-4 py-2 rounded-lg', isRecording ? 'bg-green-500' : 'bg-blue-500')}
+          onClick={isRecording ? handleStopRecording : handleStartRecording}
+        >
+          {isRecording ? 'Stop Recording' : 'Start Recording'}
+        </button>
         <input
           type="text"
-          className="bg-gray-700 text-white p-2 rounded-md w-full"
-          value={newLog.description}
-          onChange={(e) => setNewLog({ ...newLog, description: e.target.value })}
-          placeholder="Description"
+          value={newLog}
+          onChange={handleSpeechInput}
+          placeholder="Type or speak your log"
+          className="w-full p-2 rounded-lg bg-gray-700 text-white"
         />
-        <input
-          type="number"
-          className="bg-gray-700 text-white p-2 rounded-md w-full mt-2"
-          value={newLog.quantity}
-          onChange={(e) => setNewLog({ ...newLog, quantity: e.target.valueAsNumber })}
-          placeholder="Quantity"
-        />
-        <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-2"
-          onClick={handleAddLog}
-        >
-          Add Log
-        </button>
       </div>
-      <h3 className="text-lg font-bold text-white mt-4 mb-2">Procurement Logs</h3>
-      <ul>
+      <div className="flex flex-col gap-2">
         {logs.map((log) => (
-          <li key={log.id} className="bg-gray-700 p-2 rounded-md mb-2">
-            <p>
-              <span className="font-bold">Date:</span> {log.date}
-            </p>
-            <p>
-              <span className="font-bold">Description:</span> {log.description}
-            </p>
-            <p>
-              <span className="font-bold">Quantity:</span> {log.quantity}
-            </p>
-          </li>
+          <div key={log.id} className="flex gap-2 p-2 bg-gray-700 rounded-lg">
+            <Activity size={20} className="text-white" />
+            <div className="flex flex-col">
+              <span className="text-white">{log.text}</span>
+              <span className="text-gray-500 text-sm">{log.timestamp}</span>
+            </div>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }
