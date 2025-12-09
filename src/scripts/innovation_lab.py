@@ -93,5 +93,27 @@ def append_to_backlog(feature):
         f.write(entry)
     print("[Innovation_Lab] Added to Design Backlog.")
 
+    # 4. Bridge to Autonomous Dev (DB Insert)
+    try:
+        import psycopg2
+        DB_URL = os.environ.get("DATABASE_URL", "postgresql://dfarms_user:dfarms_pass@localhost:5432/dfarms_db")
+        conn = psycopg2.connect(DB_URL)
+        cur = conn.cursor()
+        
+        # Check if exists
+        cur.execute("SELECT 1 FROM feature_roadmap WHERE feature_name = %s", (feature['title'],))
+        if not cur.fetchone():
+            cur.execute("""
+                INSERT INTO feature_roadmap (feature_name, source, status)
+                VALUES (%s, %s, 'PLANNED')
+            """, (feature['title'], feature['source']))
+            conn.commit()
+            print(f"[Innovation_Lab] Sync: Added '{feature['title']}' to Feature Roadmap DB.")
+        else:
+             print(f"[Innovation_Lab] Sync: '{feature['title']}' already in DB.")
+        conn.close()
+    except Exception as e:
+        print(f"[Innovation_Lab] DB Sync Failed: {e}")
+
 if __name__ == "__main__":
     search_for_ideas()

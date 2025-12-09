@@ -1,12 +1,19 @@
 import json
 import os
 import psycopg2
-from psycopg2 import sql
 import sys
+
+# Setup Logger
+sys.path.append(os.path.join(os.path.dirname(__file__), '../agent_runtime'))
+try:
+    from agent_logger import AgentMonitor
+except:
+    class AgentMonitor:
+        def __init__(self, name): self.name = name
+        def update_status(self, s, t): print(f"[{self.name}] {s}: {t}")
 
 # Load Blueprint
 BLUEPRINT_PATH = os.path.join(os.path.dirname(__file__), '../docs/universal_erp_blueprint.json')
-BACKLOG_PATH = os.path.join(os.path.dirname(__file__), '../design_backlog.md')
 
 def get_db_tables():
     """Fetch all table names from the public schema."""
@@ -21,35 +28,12 @@ def get_db_tables():
     conn.close()
     return set(tables)
 
-def append_to_backlog(module_name, missing_table, feature_info):
-    """Add a gap ticket to the backlog."""
-    
-    # Check if already exists to avoid dupes
-    if os.path.exists(BACKLOG_PATH):
-        with open(BACKLOG_PATH, 'r') as f:
-            if f"Module: {module_name}" in f.read():
-                return # Skip if module already flagged (Simplification)
-
-    print(f"[Gap Hunter] 🚨 Gap Detected: {module_name} is missing table '{missing_table}'")
-    
-    entry = f"\n## Feature: {feature_info['name']}\n"
-    entry += f"**Source:** Gap Hunter Audit\n"
-    entry += f"**Priority:** {feature_info.get('priority', 'Medium')}\n"
-    entry += f"**Idea:** The system is missing the '{module_name}' module (specifically '{missing_table}'). Implement the core tables and the {feature_info['name']}.\n"
-    entry += f"**Context:** Required for '{module_name}' compliance according to Universal Blueprint.\n"
-    
-    try:
-        with open(BACKLOG_PATH, 'a') as f:
-            f.write(entry)
-        print(f"[Gap Hunter] ✅ Added to Backlog: {feature_info['name']}")
-    except Exception as e:
-        print(f"[Gap Hunter] ❌ Failed to write to backlog: {e}")
-
 def main():
-    print("--- GAP HUNTER STARTED ---")
+    monitor = AgentMonitor("Gap_Hunter")
+    monitor.update_status("SCANNING", "Analyzing Database vs Blueprint...")
     
     if not os.path.exists(BLUEPRINT_PATH):
-        print(f"Error: Blueprint not found at {BLUEPRINT_PATH}")
+        monitor.update_status("ERROR", f"Blueprint not found at {BLUEPRINT_PATH}")
         sys.exit(1)
 
     with open(BLUEPRINT_PATH, 'r') as f:
@@ -57,13 +41,17 @@ def main():
 
     try:
         current_tables = get_db_tables()
-        print(f"[Gap Hunter] Found {len(current_tables)} existing tables.")
+        monitor.update_status("SCANNING", f"Found {len(current_tables)} existing tables.")
     except Exception as e:
-        print(f"[Gap Hunter] DB Connection Failed: {e}")
+        monitor.update_status("ERROR", f"DB Connection Failed: {e}")
         sys.exit(1)
 
     gaps_found = 0
     
+    conn = psycopg2.connect(os.environ["DATABASE_URL"])
+    cur = conn.cursor()
+    monitor.update_status("THINKING", "Identifying missing modules...")
+
     for module_key, module_data in blueprint['modules'].items():
         missingInModule = []
         for table in module_data['required_tables']:
@@ -72,14 +60,28 @@ def main():
         
         if missingInModule:
             # We found a gap! Select the first feature to implement
-            feature = module_data['features'][0]
-            append_to_backlog(module_data['title'], missingInModule[0], feature)
+            feature_info = module_data['features'][0]
+            
+            # Check if already exists in roadmap
+            cur.execute("SELECT 1 FROM feature_roadmap WHERE feature_name = %s", (feature_info['name'],))
+            if cur.fetchone():
+                continue
+                
+            monitor.update_status("PLANNED", f"Injecting Feature: {feature_info['name']}")
+            cur.execute(
+                "INSERT INTO feature_roadmap (feature_name, status, source) VALUES (%s, 'PLANNED', 'Gap Hunter')",
+                (feature_info['name'],)
+            )
             gaps_found += 1
+            # Only add one per run to avoid spamming
+            break 
+            
+    conn.commit()
+    conn.close()
 
     if gaps_found == 0:
-        print("[Gap Hunter] No strategic gaps detected. System is compliant.")
+        monitor.update_status("IDLE", "System is compliant. No gaps.")
     else:
-        print(f"[Gap Hunter] Analysis Complete. Found {gaps_found} strategic gaps.")
-
+        monitor.update_status("IDLE", f"Injection Complete. Added {gaps_found} new tasks.")
 if __name__ == "__main__":
     main()

@@ -2,6 +2,8 @@
 import os
 import json
 import psycopg2
+import time
+import glob
 from crewai.tools import BaseTool
 
 class SimulateUserAction(BaseTool):
@@ -87,3 +89,85 @@ class LogFeatureRequest(BaseTool):
 
         except Exception as e:
             return f"Log Ticket Error: {str(e)}"
+
+class TestAgentResponsiveness(BaseTool):
+    name: str = "Test Agent Health"
+    description: str = "Pings other agents (COO, Sales) via IPC to check if they are running. Input: agent_name ('coo' or 'sales')."
+
+    def _run(self, agent_name: str) -> str:
+        try:
+            req_file = ""
+            res_file = ""
+            payload = {}
+            
+            if agent_name.lower() == 'sales':
+                req_file = "/app/ipc/sales_query.json"
+                res_file = "/app/ipc/sales_response.json"
+                payload = {"message": "PING_HEALTH_CHECK"}
+            elif agent_name.lower() == 'coo':
+                req_file = "/app/ipc/internal_command.json"
+                res_file = "/app/ipc/internal_response.json"
+                payload = {"command": "PING_HEALTH_CHECK"}
+            else:
+                return f"Unknown Agent: {agent_name}"
+
+            # Clear old response
+            if os.path.exists(res_file):
+                os.remove(res_file)
+
+            # Send Ping
+            with open(req_file, 'w') as f:
+                json.dump(payload, f)
+            
+            # Wait for response (Max 5s)
+            start_time = time.time()
+            while time.time() - start_time < 5:
+                if os.path.exists(res_file):
+                    with open(res_file, 'r') as f:
+                        data = json.load(f)
+                    return f"HEALTHY: {agent_name.upper()} responded in {round(time.time() - start_time, 2)}s. Response: {str(data)}"
+                time.sleep(0.5)
+            
+            return f"CRITICAL: {agent_name.upper()} is UNRESPONSIVE (Timeout 5s)."
+
+        except Exception as e:
+            return f"Health Check Error: {str(e)}"
+
+class VerifyFeatureDeployment(BaseTool):
+    name: str = "Verify Deployment"
+    description: str = "Checks if features marked as 'DEPLOYED' in roadmap actually exist. Input: None"
+
+    def _run(self) -> str:
+        try:
+            conn = psycopg2.connect(os.environ["DATABASE_URL"])
+            cur = conn.cursor()
+            cur.execute("SELECT feature_name FROM feature_roadmap WHERE status = 'DEPLOYED'")
+            deployed = [row[0] for row in cur.fetchall()]
+            cur.close()
+            conn.close()
+
+            if not deployed:
+                return "No features currently marked as DEPLOYED."
+
+            # Simple heuristic check (files exist?)
+            # This is a basic implementation that could be expanded
+            report = []
+            for feature in deployed:
+                # Naive search in web folder
+                normalized = feature.lower().replace(" ", "")
+                found = False
+                # Walk through src/web/app to find something matching
+                for root, dirs, files in os.walk("/app/src/web/app"):
+                    for file in files:
+                        if normalized in file.lower() or normalized in root.lower():
+                            found = True
+                            break
+                    if found: break
+                
+                status = "VERIFIED" if found else "MISSING (Code not found)"
+                report.append(f"- {feature}: {status}")
+
+            return "Deployment Verification Report:\n" + "\n".join(report)
+
+        except Exception as e:
+            return f"Verification Error: {str(e)}"

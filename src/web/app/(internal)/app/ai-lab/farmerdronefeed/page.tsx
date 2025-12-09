@@ -1,13 +1,14 @@
 // @ts-nocheck
+'use client';
 
 import React, { useState } from 'react';
-import { FiMonitor, FiUser, FiMapPin } from 'lucide-react';
+import { Monitor, User, MapPin } from 'lucide-react';
 
 const FarmerDroneFeed = () => {
   const [feedItems, setFeedItems] = useState([
-    { id: 1, icon: <FiMonitor size={24} />, title: 'Daily Farming Update', content: 'Check daily updates on your farm.' },
-    { id: 2, icon: <FiUser size={24} />, title: 'Farmer Profile', content: 'View and manage your farmer details.' },
-    { id: 3, icon: <FiMapPin size={24} />, title: 'Farm Map', content: 'Visualize your farm layout with drone feed.' }
+    { id: 1, icon: <Monitor size={24} />, title: 'Daily Farming Update', content: 'Check daily updates on your farm.' },
+    { id: 2, icon: <User size={24} />, title: 'Farmer Profile', content: 'View and manage your farmer details.' },
+    { id: 3, icon: <MapPin size={24} />, title: 'Farm Map', content: 'Visualize your farm layout with drone feed.' }
   ]);
 
   return (

@@ -42,6 +42,12 @@ def update_roadmap_status(feature, status, pr_link=None):
                 SET status = %s, pr_link = %s, completed_at = CURRENT_TIMESTAMP 
                 WHERE feature_name = %s
             """, (status, pr_link, feature))
+        elif status == "BUILDING":
+             cur.execute("""
+                UPDATE feature_roadmap 
+                SET status = %s, started_at = CURRENT_TIMESTAMP 
+                WHERE feature_name = %s
+            """, (status, feature))
         else:
             cur.execute("UPDATE feature_roadmap SET status = %s WHERE feature_name = %s", (status, feature))
         conn.commit()
@@ -93,28 +99,76 @@ def main():
             
             # C. Build Phase
             update_roadmap_status(ticket, "BUILDING")
-            monitor.update_status("BUILDING", f"Triggering Refactor Engine for {ticket}...")
+            # C. Build Phase (With Retries)
+            update_roadmap_status(ticket, "BUILDING")
             
-            try:
-                # Trigger the actual build script
-                subprocess.run([
-                    "python", "src/scripts/refactor_engine.py", 
-                    "--feature", ticket
-                ], check=True)
+            max_retries = 3
+            attempt = 0
+            success = False
+            last_error = None
+            
+            while attempt < max_retries:
+                attempt += 1
+                monitor.update_status("BUILDING", f"Attempt {attempt}/{max_retries} for {ticket}...")
                 
-                # D. Verification & Deploy
-                # Assuming success if no exception
+                try:
+                    # Construct command
+                    cmd = ["python", "src/scripts/refactor_engine.py", "--feature", ticket]
+                    if last_error:
+                        cmd.extend(["--feedback", last_error])
+                        
+                    # Trigger Refactor Engine
+                    subprocess.run(cmd, check=True)
+                    
+                    # Gatekeeper Check
+                    monitor.update_status("VERIFYING", f"Running Gatekeeper (Attempt {attempt})...")
+                    gatekeeper_res = subprocess.run(
+                        ["python", "src/scripts/gatekeeper.py", ticket], 
+                        capture_output=True, text=True
+                    )
+                    
+                    if gatekeeper_res.returncode == 0:
+                        success = True
+                        break # Success!
+                    else:
+                        last_error = gatekeeper_res.stdout
+                        monitor.update_status("FIXING", f"Gatekeeper Rejected. Retrying with feedback...")
+                        
+                except Exception as e:
+                    last_error = str(e)
+            
+            if success:
+                 # E. Deploy
                 pr_link = f"https://github.com/d-farms/core/pull/{int(time.time())}"
                 update_roadmap_status(ticket, "DEPLOYED", pr_link)
                 monitor.update_status("DEPLOYED", f"{ticket} is Live! PR: {pr_link}")
-                
-            except Exception as e:
-                monitor.update_status("ERROR", f"Build failed for {ticket}: {e}")
-                # Revert status?
+            else:
+                monitor.update_status("ERROR", f"Build failed after {max_retries} attempts. Marking as FAILED.")
+                update_roadmap_status(ticket, "FAILED")
         else:
-            monitor.update_status("IDLE", "No planned items found. Sleeping.")
+            monitor.update_status("IDLE", "No planned items found. Running Innovation Lab...")
+            try:
+                # Perpetual Innovation: If empty, generate work
+                subprocess.run(["python", "src/scripts/gap_hunter.py"], check=False)
+                # Check DB again immediately
+                ticket = get_next_ticket()
+                if not ticket:
+                     subprocess.run(["python", "src/scripts/innovation_lab.py"], check=False)
+            except Exception as e:
+                if not ticket:
+                     subprocess.run(["python", "src/scripts/innovation_lab.py"], check=False)
+            except Exception as e:
+                monitor.log(f"Innovation Lab failed: {e}")
+        
+        # Periodic Maintenance (Every 5 iterations ~ 30s)
+        if iteration % 5 == 0:
+            try:
+                subprocess.run(["python", "src/scripts/scout.py"], check=False)
+                subprocess.run(["python", "src/scripts/evolve_now.py"], check=False)
+            except:
+                pass
             
-        time.sleep(5)
+        time.sleep(30) # Groq Free Tier Friendly (Avoid Rate Limits)
         iteration += 1
 
 if __name__ == "__main__":

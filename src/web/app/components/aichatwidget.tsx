@@ -1,7 +1,8 @@
 // @ts-nocheck
+'use client';
 
 import React, { useState } from 'react';
-import { HiChat } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 
 const AiChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,7 +23,7 @@ const AiChatWidget = () => {
         onClick={() => setIsOpen(!isOpen)}
         className="bg-gray-800 text-white p-2 rounded-full shadow-lg hover:bg-gray-700 focus:outline-none"
       >
-        <HiChat size={24} />
+        <MessageCircle size={24} />
       </button>
       {isOpen && (
         <div className="absolute bottom-12 right-4 bg-gray-900 rounded-lg shadow-lg w-full max-w-xs overflow-hidden">

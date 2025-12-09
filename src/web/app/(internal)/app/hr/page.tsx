@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
 import Link from 'next/link';
+import EmployeeSelfServicePortal from '@/app/components/employeeselfserviceportal';
 
 // Force dynamic to ensure data is fresh
 export const dynamic = 'force-dynamic';
@@ -66,6 +67,10 @@ export default async function HRPage() {
                         </button>
                     </div>
                 </div>
+
+                {/* Self Service Section (AI Generated) */}
+                <EmployeeSelfServicePortal />
+                <div className="mb-8"></div>
 
                 {/* Employee Table */}
                 <section>

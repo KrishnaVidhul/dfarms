@@ -1,36 +1,21 @@
 // @ts-nocheck
-
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import { FiMapPin } from 'lucide-react';
-import 'leaflet/dist/leaflet.css';
+'use client';
+import React from 'react';
+import { MapPin } from 'lucide-react';
 
 const AutonomousSupplyChainMap = () => {
-  const [center, setCenter] = useState([51.505, -0.09]);
-  const [zoom, setZoom] = useState(13);
-
-  useEffect(() => {
-    // Example data: Replace with actual data fetching logic
-    fetch('/api/supply-chain-data')
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data);
-        // Update center and zoom based on data
-      });
-  }, []);
-
   return (
-    <MapContainer style={{ height: '100vh', width: '100vw' }} center={center} zoom={zoom}>
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      />
-      <Marker position={[51.5, -0.09]}>
-        <Popup>
-          A pretty CSS3 popup. Easily customizable.
-        </Popup>
-      </Marker>
-    </MapContainer>
+    <div className="min-h-screen bg-gray-900 text-white p-8">
+      <h1 className="text-3xl font-bold mb-6">Autonomous Supply Chain Map</h1>
+      <div className="w-full h-[600px] bg-gray-800 rounded-xl flex flex-col items-center justify-center border border-gray-700">
+        <MapPin size={64} className="text-purple-500 mb-4 animate-bounce" />
+        <h2 className="text-xl font-semibold">Map Visualization Placeholder</h2>
+        <p className="text-gray-400 mt-2 text-center max-w-md">
+          The AI generated a dependency on 'react-leaflet' which is not installed in the container.
+          This is a placeholder to prevent the build from crashing.
+        </p>
+      </div>
+    </div>
   );
 };
 

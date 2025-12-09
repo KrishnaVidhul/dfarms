@@ -38,12 +38,30 @@ export default function TaskAssignment() {
     };
 
     const handleSubmit = async () => {
-        // In a real app, this would POST to an API or Agent endpoint
-        console.log("Dispatching task:", prompt);
-        alert("Task dispatched to Agent Queue! (Simulation)");
-        setIsOpen(false);
-        setPrompt('');
-        setSelectedTemplate(null);
+        if (!prompt.trim()) return;
+
+        try {
+            const res = await fetch('/api/admin/assign_task', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    task: prompt,
+                    type: selectedTemplate || 'custom'
+                })
+            });
+
+            if (res.ok) {
+                alert("Task dispatched to Autonomous Agent Queue!");
+                setIsOpen(false);
+                setPrompt('');
+                setSelectedTemplate(null);
+            } else {
+                alert("Failed to dispatch task. Check logs.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Network Error");
+        }
     };
 
     return (
@@ -86,8 +104,8 @@ export default function TaskAssignment() {
                                         key={t.id}
                                         onClick={() => applyTemplate(t)}
                                         className={`p-4 rounded-lg border text-left transition-all ${selectedTemplate === t.id
-                                                ? 'bg-zinc-800 border-emerald-500 ring-1 ring-emerald-500'
-                                                : 'bg-zinc-950 border-zinc-800 hover:border-zinc-600 hover:bg-zinc-900'
+                                            ? 'bg-zinc-800 border-emerald-500 ring-1 ring-emerald-500'
+                                            : 'bg-zinc-950 border-zinc-800 hover:border-zinc-600 hover:bg-zinc-900'
                                             }`}
                                     >
                                         <t.icon className={`mb-3 ${t.color}`} size={24} />

@@ -18,3 +18,4 @@ pytest
 requests
 watchdog
 gitpython
+langchain-groq

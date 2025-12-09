@@ -5,7 +5,7 @@
 import React, { useState } from 'react';
 import { Activity, Users, UserPlus, UserCheck } from 'lucide-react';
 import clsx from 'clsx';
-import tailwindMerge from 'tailwind-merge';
+import { twMerge } from 'tailwind-merge';
 
 const EmployeeSelfServicePortal = () => {
   const [theme, setTheme] = useState('light');
@@ -16,7 +16,7 @@ const EmployeeSelfServicePortal = () => {
 
   return (
     <div
-      className={tailwindMerge(
+      className={twMerge(
         'bg-background text-foreground dark:bg-background-dark dark:text-foreground-dark',
         theme === 'dark' && 'dark'
       )}

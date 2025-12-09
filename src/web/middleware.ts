@@ -7,7 +7,7 @@ export function middleware(request: NextRequest) {
 
     // 1. Protect Admin Routes
     if (path.startsWith('/admin')) {
-        if (!role || role !== 'super_admin') {
+        if (!role || (role !== 'super_admin' && role !== 'admin')) {
             return NextResponse.redirect(new URL('/login', request.url));
         }
     }
@@ -21,10 +21,10 @@ export function middleware(request: NextRequest) {
 
     // 3. User Role Based Routing (Driver/Staff/Admin)
     if (path.startsWith('/login') && role) {
-        if (role === 'super_admin') return NextResponse.redirect(new URL('/admin', request.url));
+        if (role === 'super_admin' || role === 'admin') return NextResponse.redirect(new URL('/admin', request.url));
         if (role === 'driver') return NextResponse.redirect(new URL('/driver-portal', request.url));
         if (role === 'staff') return NextResponse.redirect(new URL('/staff-portal', request.url));
-        return NextResponse.redirect(new URL('/app', request.url)); // Default for 'user' / 'staff' if not caught
+        return NextResponse.redirect(new URL('/app', request.url));
     }
 
     // 4. Protect Specific Portals

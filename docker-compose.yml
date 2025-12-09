@@ -52,16 +52,15 @@ services:
     volumes:
       - .:/app
       - ./ipc:/app/ipc
+      - ${HOME}/.ssh:/root/.ssh:ro
       - /var/run/docker.sock:/var/run/docker.sock
     command: python -u src/agent_runtime/super_agent.py
     env_file:
       - ./src/agent_runtime/.env
     environment:
-      OPENAI_API_BASE: "http://host.docker.internal:11434/v1"
-      OPENAI_API_KEY: "ollama"
-      OLLAMA_API_BASE: "http://host.docker.internal:11434"
-      OLLAMA_HOST: "http://host.docker.internal:11434"
+
       DATABASE_URL: ${DATABASE_URL}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:

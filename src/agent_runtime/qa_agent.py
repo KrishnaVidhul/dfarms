@@ -1,7 +1,8 @@
 
 import os
 from crewai import Agent, Task, Crew
-from qa_tools import SimulateUserAction, LogFeatureRequest
+from crewai import Agent, Task, Crew
+from qa_tools import SimulateUserAction, LogFeatureRequest, TestAgentResponsiveness, VerifyFeatureDeployment
 
 def run_qa_audit():
     # 1. Define Agent
@@ -16,7 +17,7 @@ def run_qa_audit():
         1. Negative Stock: Try selling 10000kg of an item. If it succeeds (resulting in negative balance), file a High Priority bug.
         2. RBAC Bypass: Try simulating 'access_admin_panel' as 'staff'. If it says "Access Granted", file a High Priority bug.
         """,
-        tools=[SimulateUserAction(), LogFeatureRequest()],
+        tools=[SimulateUserAction(), LogFeatureRequest(), TestAgentResponsiveness(), VerifyFeatureDeployment()],
         verbose=True,
         memory=False,
         llm="ollama/llama3:latest",
@@ -46,10 +47,24 @@ def run_qa_audit():
         agent=qa_agent
     )
 
+    task_system_health = Task(
+        description="""
+        Test Case 3: System Health Calibration.
+        Action: 
+        1. Ping 'coo' and 'sales' agents to check responsiveness.
+        2. Verify 'DEPLOYED' features from roadmap are present in codebase.
+        
+        Expected: All agents return HEALTHY. Deployed features found.
+        Actual: If any agent is CRITICAL/UNRESPONSIVE, Log a High Priority Ticket immediately.
+        """,
+        expected_output="Health Report.",
+        agent=qa_agent
+    )
+
     # 3. Running Crew
     crew = Crew(
         agents=[qa_agent],
-        tasks=[task_inventory_stress, task_security_stress],
+        tasks=[task_inventory_stress, task_security_stress, task_system_health],
         verbose=True
     )
 

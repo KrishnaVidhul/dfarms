@@ -1,9 +1,10 @@
 
 // @ts-nocheck
+'use client';
 
 import React from 'react';
-import { useRouter } from 'next/router';
-import LucideIcon, { UserCog2, Clock, ListCheck, FileDocument } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { UserCog2, Clock, ListCheck, FileText } from 'lucide-react';
 
 const EmployeeSelfServicePortal: React.FC = () => {
   const router = useRouter();
@@ -21,28 +22,28 @@ const EmployeeSelfServicePortal: React.FC = () => {
             onClick={() => handleNavigate('/dashboard/self-service/profile')}
             className="flex items-center p-4 rounded-lg hover:bg-opacity-20 cursor-pointer"
           >
-            <LucideIcon icon={UserCog2} size={24} className="mr-4" />
+            <UserCog2 size={24} className="mr-4" />
             Profile Management
           </li>
           <li
             onClick={() => handleNavigate('/dashboard/self-service/time-off')}
             className="flex items-center p-4 rounded-lg hover:bg-opacity-20 cursor-pointer"
           >
-            <LucideIcon icon={Clock} size={24} className="mr-4" />
+            <Clock size={24} className="mr-4" />
             Time Off Requests
           </li>
           <li
             onClick={() => handleNavigate('/dashboard/self-service/tasks')}
             className="flex items-center p-4 rounded-lg hover:bg-opacity-20 cursor-pointer"
           >
-            <LucideIcon icon={ListCheck} size={24} className="mr-4" />
+            <ListCheck size={24} className="mr-4" />
             My Tasks
           </li>
           <li
             onClick={() => handleNavigate('/dashboard/self-service/documents')}
             className="flex items-center p-4 rounded-lg hover:bg-opacity-20 cursor-pointer"
           >
-            <LucideIcon icon={FileDocument} size={24} className="mr-4" />
+            <FileText size={24} className="mr-4" />
             Document Management
           </li>
         </ul>

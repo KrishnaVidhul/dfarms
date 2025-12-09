@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# JavaScript/Node
+node_modules/
+.next/
+dist/
+coverage/
+.DS_Store
+
+# Terraform
+Terraform/.terraform/
+Terraform/*.tfstate
+Terraform/*.tfstate.backup
+Terraform/*.tfvars
+Terraform/.terraform.lock.hcl
+
+# IDE
+.vscode/
+.idea/
+
+# Custom
+dev_logs.txt
+ipc/*.json
+pg_data/

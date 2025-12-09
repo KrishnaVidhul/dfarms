@@ -9,33 +9,23 @@ Generated from UAT Session with Logistics Head (Arjun)
 | 2 | **Real-time Rate Widget Overlay** | Procurement | Medium | Medium | Show live market price difference (e.g., '+5% vs Market') next to the price input. |
 | 3 | **Live Logistics Map** | Logistics | Medium | High | Mapbox integration to show warehouse and truck locations. |
 
+## Feature: WhatsApp Price Bot
+**Source:** AgTech Trends 2025
+**Idea:** Allow farmers to send 'Rate Tur Dal' on WhatsApp and get instant price response.
+**Priority:** Medium
+**Status:** PROPOSED
+
+
+## Feature: Reverse Auction Bidding
+**Source:** Competitor Analysis (Ninjacart)
+**Idea:** Allow suppliers to bid down prices for a buy order in real-time for 30 mins.
+**Priority:** Medium
+**Status:** PROPOSED
+
+
 ## Feature: Voice-First Navigation
 **Source:** UX Trends India
 **Idea:** Add a microphone button to every screen. Farmers prefer speaking 'Add 100kg Chana' over typing.
 **Priority:** Medium
 **Status:** PROPOSED
 
-
-## Feature: Employee Self-Service Portal
-**Source:** Gap Hunter Audit
-**Priority:** High
-**Idea:** The system is missing the 'Human Resources & Payroll' module (specifically 'employees'). Implement the core tables and the Employee Self-Service Portal.
-**Context:** Required for 'Human Resources & Payroll' compliance according to Universal Blueprint.
-
-## Feature: Real-time Vehicle Tracking
-**Source:** Gap Hunter Audit
-**Priority:** High
-**Idea:** The system is missing the 'Fleet & Logistics' module (specifically 'vehicles'). Implement the core tables and the Real-time Vehicle Tracking.
-**Context:** Required for 'Fleet & Logistics' compliance according to Universal Blueprint.
-
-## Feature: Automated Invoice OCR
-**Source:** Gap Hunter Audit
-**Priority:** Medium
-**Idea:** The system is missing the 'Document Intelligence' module (specifically 'documents'). Implement the core tables and the Automated Invoice OCR.
-**Context:** Required for 'Document Intelligence' compliance according to Universal Blueprint.
-
-## Feature: System-wide Audit Trail
-**Source:** Gap Hunter Audit
-**Priority:** Critical
-**Idea:** The system is missing the 'Security & Compliance' module (specifically 'audit_logs'). Implement the core tables and the System-wide Audit Trail.
-**Context:** Required for 'Security & Compliance' compliance according to Universal Blueprint.

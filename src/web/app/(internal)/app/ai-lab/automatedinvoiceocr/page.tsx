@@ -1,9 +1,10 @@
 // @ts-nocheck
+'use client';
 
 import React, { useState } from 'react';
 import { Activity, Box, Circle, User } from 'lucide-react';
 import clsx from 'clsx';
-import tailwindMerge from 'tailwind-merge';
+import { twMerge } from 'tailwind-merge';
 
 export default function Page() {
   const [invoiceImage, setInvoiceImage] = useState(null);
@@ -24,7 +25,7 @@ export default function Page() {
 
   return (
     <div className="p-4">
-      <h1 className={tailwindMerge(
+      <h1 className={twMerge(
         'text-xl font-bold',
         'dark:text-white'
       )}>Automated Invoice OCR</h1>
@@ -48,7 +49,7 @@ export default function Page() {
       </div>
       {ocrResult && (
         <div className="mt-6 p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-md">
-          <h2 className={tailwindMerge(
+          <h2 className={twMerge(
             'text-lg font-semibold',
             'dark:text-white'
           )}>OCR Result</h2>

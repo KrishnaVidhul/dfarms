@@ -3,6 +3,8 @@ import Link from 'next/link';
 import fs from 'fs';
 import path from 'path';
 import TaskAssignment from './TaskAssignment'; // Import the client component
+import LiveRoadmap from './LiveRoadmap';
+
 
 // Force dynamic to ensure data is fresh
 export const dynamic = 'force-dynamic';
@@ -169,64 +171,17 @@ export default async function AdminPanel() {
 
                 {/* Autonomous Roadmap Section */}
                 <section className="mb-12">
+                    {/* ... (in AdminPanel) */}
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-xl font-semibold text-emerald-400 flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                             Live Autonomous Roadmap
                         </h2>
-                        <span className="text-xs text-gray-400">Updates Real-time</span>
+                        <span className="text-xs text-gray-400">Updates Real-time (3s poll)</span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Planned */}
-                        <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                            <h3 className="text-gray-400 font-bold uppercase text-xs mb-4 flex justify-between">
-                                Discovery / Planned <span>{roadmap.planned.length}</span>
-                            </h3>
-                            <div className="space-y-3">
-                                {roadmap.planned.length === 0 && <div className="text-gray-500 text-sm">No items.</div>}
-                                {roadmap.planned.map((feat: any, idx: number) => (
-                                    <div key={idx} className="bg-gray-900 p-3 rounded border border-gray-800 border-l-4 border-l-blue-500">
-                                        <div className="text-sm font-semibold text-gray-200">{feat.feature_name}</div>
-                                        <div className="text-xs text-gray-500 mt-1">Source: {feat.source}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+                    <LiveRoadmap initialData={roadmap} />
 
-                        {/* Building */}
-                        <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                            <h3 className="text-blue-400 font-bold uppercase text-xs mb-4 flex justify-between">
-                                In Progress <span>{roadmap.building.length}</span>
-                            </h3>
-                            <div className="space-y-3">
-                                {roadmap.building.length === 0 && <div className="text-gray-500 text-sm">No items.</div>}
-                                {roadmap.building.map((feat: any, idx: number) => (
-                                    <div key={idx} className="bg-gray-900 p-3 rounded border border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
-                                        <div className="text-sm font-semibold text-white">{feat.feature_name}</div>
-                                        <div className="text-xs text-blue-400 mt-2 flex items-center gap-2">
-                                            <span className="animate-spin">⟳</span> Writing Code...
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Deployed */}
-                        <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                            <h3 className="text-green-400 font-bold uppercase text-xs mb-4 flex justify-between">
-                                Deployed <span>{roadmap.deployed.length}</span>
-                            </h3>
-                            <div className="space-y-3 opacity-80">
-                                {roadmap.deployed.map((feat: any, idx: number) => (
-                                    <div key={idx} className="bg-gray-900 p-3 rounded border border-green-900/50 border-l-4 border-l-green-500">
-                                        <div className="text-sm font-semibold text-gray-200 line-through decoration-gray-500">{feat.feature_name}</div>
-                                        {feat.pr_link && <a href={feat.pr_link} className="text-xs text-green-500 mt-1 hover:underline">View PR #{feat.pr_link.split('/').pop()}</a>}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
                 </section>
 
                 {/* Users Section */}

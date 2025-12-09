@@ -6,5 +6,45 @@
     "priority": "High",
     "status": "Open",
     "logged_by": "QA_AUDITOR"
+  },
+  {
+    "id": "TICKET-42C0",
+    "title": "Prevent Negative Stock",
+    "description": "Selling 10000kg of 'Chana' resulted in unknown outcome.",
+    "priority": "High",
+    "status": "Open",
+    "logged_by": "QA_AUDITOR"
+  },
+  {
+    "id": "TICKET-0F76",
+    "title": "Fix RBAC Security Leak",
+    "description": "Access granted to staff for admin panel",
+    "priority": "High",
+    "status": "Open",
+    "logged_by": "QA_AUDITOR"
+  },
+  {
+    "id": "TICKET-9105",
+    "title": "Fix RBAC Security Leak",
+    "description": "Access granted to staff for admin panel; bypassing role-based access control (RBAC)",
+    "priority": "High",
+    "status": "Open",
+    "logged_by": "QA_AUDITOR"
+  },
+  {
+    "id": "TICKET-A5AE",
+    "title": "COO Agent Unresponsive",
+    "description": "COO agent timed out after 5 seconds. Unable to ping.",
+    "priority": "High",
+    "status": "Open",
+    "logged_by": "QA_AUDITOR"
+  },
+  {
+    "id": "TICKET-299C",
+    "title": "SALES Agent Unresponsive",
+    "description": "SALES agent timed out after 5 seconds. Unable to ping.",
+    "priority": "High",
+    "status": "Open",
+    "logged_by": "QA_AUDITOR"
   }
 ]

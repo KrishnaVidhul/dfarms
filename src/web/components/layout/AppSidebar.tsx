@@ -11,7 +11,8 @@ import {
     Users,
     Settings,
     LifeBuoy,
-    Activity
+    Activity,
+    FileCode
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -41,7 +42,8 @@ const navItems = [
         group: 'ADMIN', items: [
             { label: 'Admin Panel', icon: Users, href: '/admin' },
             { label: 'Settings', icon: Settings, href: '/app/settings' },
-            { icon: Activity, label: 'Neural Link', href: '/app/agents', className: 'text-emerald-400' },
+            { label: 'Feature Registry', icon: FileCode, href: '/app/registry' }, // Added Feature Registry
+            { icon: Activity, label: 'Neural Link (AI Lab)', href: '/app/ai-lab', className: 'text-emerald-400' },
         ]
     },
 ];
@@ -71,7 +73,8 @@ export default function AppSidebar() {
                                         "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200",
                                         pathname === item.href
                                             ? "bg-zinc-800 text-white"
-                                            : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50"
+                                            : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50",
+                                        (item as any).className // Apply custom classes if they exist
                                     )}
                                 >
                                     <item.icon size={18} />

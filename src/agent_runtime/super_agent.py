@@ -12,9 +12,22 @@ os.environ["OPENAI_MODEL_NAME"] = "llama3:latest"
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from crewai import Agent, Task, Crew, Process
+from langchain_groq import ChatGroq
+from langchain.agents import Tool, initialize_agent, AgentType
+from langchain.memory import ConversationBufferMemory
+import os
+import json
 from langchain_community.tools import DuckDuckGoSearchRun
 from crewai.tools import BaseTool
 from db_tools import AddStockTool, CheckStockTool, ProcessBatchTool
+
+# --- CONFIGURATION (GROQ CLOUD) ---
+# We are now running on the cloud with Llama 3 70B (Senior Developer Level)
+llm = ChatGroq(
+    temperature=0,
+    model_name="llama-3.3-70b-versatile",
+    api_key=os.getenv("GROQ_API_KEY")
+)
 
 # ---- Tools ----
 
@@ -101,6 +114,11 @@ super_agent = Agent(
 
 def process_command(command_text):
     print(f"COO Processing: {command_text}")
+    
+    # Fast-path for Health Checks
+    if command_text == "PING_HEALTH_CHECK":
+        return "PONG: COO Agent is Online."
+    
     
     # We define a flexible task that allows the agent to pick the right tool
     task = Task(

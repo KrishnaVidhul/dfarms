@@ -1,7 +1,8 @@
 // @ts-nocheck
+'use client';
 
 import React, { useState } from 'react';
-import { LucideBarChart2 } from 'lucide-react';
+import { BarChart2 } from 'lucide-react';
 
 const MarketIntelligenceDashboard = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -18,14 +19,14 @@ const MarketIntelligenceDashboard = () => {
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md w-full max-w-4xl">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">Market Trends</h2>
-            <LucideBarChart2 size={24} />
+            <BarChart2 size={24} />
           </div>
           {/* Add your market trends data here */}
         </div>
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md w-full max-w-4xl">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">Competitor Analysis</h2>
-            <LucideBarChart2 size={24} />
+            <BarChart2 size={24} />
           </div>
           {/* Add your competitor analysis data here */}
         </div>
