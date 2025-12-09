@@ -21,7 +21,7 @@ services:
       - ./src/web:/app
       - ./src/commands.txt:/app/commands.txt
       - ./ipc:/app/ipc
-    command: sh -c "if [ -f package.json ]; then npm install && NODE_OPTIONS='--max-old-space-size=768' npm run build && npm start; else echo 'Waiting for Next.js init...'; tail -f /dev/null; fi"
+    command: sh -c "if [ -f package.json ]; then npm install --production && npm start; else echo 'Waiting for Next.js init...'; tail -f /dev/null; fi"
     ports:
       - "3000:3000"
     environment:

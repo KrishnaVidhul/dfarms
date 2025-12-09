@@ -8,10 +8,3 @@ Generated from UAT Session with Logistics Head (Arjun)
 | 1 | **Farmer Payment Portal (Mobile PWA)** | Web/Mobile | High (Vendor Trust) | High | Mobile-optimized login for farmers to view payment status and ledger. |
 | 2 | **Real-time Rate Widget Overlay** | Procurement | Medium | Medium | Show live market price difference (e.g., '+5% vs Market') next to the price input. |
 | 3 | **Live Logistics Map** | Logistics | Medium | High | Mapbox integration to show warehouse and truck locations. |
-
-## Feature: Reverse Auction Bidding
-**Source:** Competitor Analysis (Ninjacart)
-**Idea:** Allow suppliers to bid down prices for a buy order in real-time for 30 mins.
-**Priority:** Medium
-**Status:** PROPOSED
-

@@ -1,9 +1,8 @@
+'use client';
 // @ts-nocheck
 import { useState, useEffect } from 'react';
 import { Activity, Circle, User } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-
-'use client';
 
 const mockVehicleData = [
   { time: '00:00', speed: 40 },
@@ -44,9 +43,8 @@ export default function Page() {
         {vehicles.map((vehicle) => (
           <div
             key={vehicle.id}
-            className={`p-2 bg-gray-700 rounded-md m-2 cursor-pointer ${
-              selectedVehicle.id === vehicle.id ? 'bg-gray-600' : ''
-            }`}
+            className={`p-2 bg-gray-700 rounded-md m-2 cursor-pointer ${selectedVehicle.id === vehicle.id ? 'bg-gray-600' : ''
+              }`}
             onClick={() => setSelectedVehicle(vehicle)}
           >
             <Circle className="text-gray-200" size={20} />

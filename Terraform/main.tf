@@ -58,7 +58,8 @@ resource "google_project_service" "compute_api" {
 # 4. THE FREE TIER VM (e2-micro)
 resource "google_compute_instance" "dfarms_server" {
   name                      = "dfarms-erp-prod"
-  machine_type              = "e2-medium" # Upgraded for speed (2 vCPU, 4GB RAM)
+  machine_type              = "e2-micro" # Upgraded for speed (2 vCPU, 4GB RAM)
+  zone                      = "us-central1-a"
   allow_stopping_for_update = true
   depends_on                = [google_project_service.compute_api]
 

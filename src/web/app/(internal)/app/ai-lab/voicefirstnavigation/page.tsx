@@ -1,9 +1,7 @@
+'use client';
 // @ts-nocheck
-import { useClient } from 'next';
 import { Activity, User } from 'lucide-react';
 import { clsx } from 'clsx';
-
-'use client';
 
 const voiceCommands = [
   { id: 1, command: 'Navigate to Farm Overview' },

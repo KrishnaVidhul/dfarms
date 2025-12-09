@@ -1,8 +1,7 @@
+'use client';
 // @ts-nocheck
 import { clsx } from 'clsx';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-
-'use client';
 
 const mockData = [
   { name: 'Jan', N: 100, P: 50, K: 200 },
