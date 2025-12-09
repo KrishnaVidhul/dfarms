@@ -151,6 +151,14 @@ def process_command(command_text):
 
 def main():
     print("D Farms SUPER AGENT (COO) Started...")
+
+    # 0. Initialize Database if needed
+    try:
+        import db_initializer
+        db_initializer.init_db()
+    except Exception as e:
+        print(f"Startup DB Init Failed: {e}")
+
     commands_file = "src/commands.txt"
     logs_file = "src/logs.txt"
     while True:
