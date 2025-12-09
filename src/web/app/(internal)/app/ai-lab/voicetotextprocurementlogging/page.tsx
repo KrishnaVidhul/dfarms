@@ -1,139 +1,62 @@
 // @ts-nocheck
 'use client';
 
-import { Activity, Circle } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import { useState } from 'react';
 import { clsx } from 'clsx';
 
+const procurementLogs = [
+  { id: 1, date: '2024-09-01', log: 'Ordered 100 seeds' },
+  { id: 2, date: '2024-09-05', log: 'Received 50 fertilizers' },
+  { id: 3, date: '2024-09-10', log: 'Purchased 200 pesticides' },
+];
+
 export default function Page() {
-  const [procurementLogs, setProcurementLogs] = useState([
-    {
-      id: 1,
-      date: '2024-09-16',
-      quantity: '1000 kg',
-      supplier: 'Green Farm',
-      description: 'Procured 1000 kg of fresh produce',
-    },
-    {
-      id: 2,
-      date: '2024-09-15',
-      quantity: '500 kg',
-      supplier: 'AgriPro',
-      description: 'Procured 500 kg of organic fertilizers',
-    },
-    {
-      id: 3,
-      date: '2024-09-14',
-      quantity: '2000 kg',
-      supplier: 'Farm Fresh',
-      description: 'Procured 2000 kg of livestock feed',
-    },
-  ]);
+  const [logs, setLogs] = useState(procurementLogs);
+  const [newLog, setNewLog] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
 
-  const [newLog, setNewLog] = useState({
-    date: '',
-    quantity: '',
-    supplier: '',
-    description: '',
-  });
-
-  const handleAddLog = () => {
-    setProcurementLogs([...procurementLogs, newLog]);
-    setNewLog({
-      date: '',
-      quantity: '',
-      supplier: '',
-      description: '',
-    });
+  const handleVoiceToText = () => {
+    setIsRecording(true);
+    // Mock voice-to-text functionality
+    const randomLog = `Logged on ${new Date().toISOString().split('T')[0]}: ${newLog}`;
+    setLogs([...logs, { id: logs.length + 1, date: new Date().toISOString().split('T')[0], log: randomLog }]);
+    setNewLog('');
+    setIsRecording(false);
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-4 md:p-6 lg:p-8 mt-10 bg-neutral-800 rounded-xl shadow-md">
-      <h2 className="text-lg font-bold text-neutral-200 mb-4">Voice-to-Text Procurement Logging</h2>
+    <div className="h-screen p-4 bg-gray-800 text-gray-100">
+      <h1 className="text-2xl font-bold mb-4">Voice-to-Text Procurement Logging</h1>
       <div className="flex justify-between items-center mb-4">
         <button
           className={clsx(
-            'bg-neutral-700 hover:bg-neutral-600 transition duration-200 py-2 px-4 rounded-md text-neutral-200',
-            'flex items-center gap-2'
+            'py-2 px-4 rounded-lg',
+            isRecording ? 'bg-green-500' : 'bg-blue-500',
+            'text-gray-100 hover:opacity-80'
           )}
+          onClick={handleVoiceToText}
         >
-          <Activity size={18} />
-          Log Procurement
+          {isRecording ? <Activity className="mr-2" /> : null}
+          {isRecording ? 'Recording...' : 'Start Recording'}
         </button>
+        <input
+          type="text"
+          value={newLog}
+          onChange={(e) => setNewLog(e.target.value)}
+          placeholder="Type or speak your log"
+          className="py-2 px-4 rounded-lg bg-gray-700 text-gray-100 w-full md:w-1/2 lg:w-1/3"
+        />
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-neutral-200 table-auto">
-          <thead className="bg-neutral-700">
-            <tr>
-              <th className="px-4 py-2">Date</th>
-              <th className="px-4 py-2">Quantity</th>
-              <th className="px-4 py-2">Supplier</th>
-              <th className="px-4 py-2">Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            {procurementLogs.map((log) => (
-              <tr key={log.id} className="bg-neutral-800 hover:bg-neutral-700 transition duration-200">
-                <td className="px-4 py-2">{log.date}</td>
-                <td className="px-4 py-2">{log.quantity}</td>
-                <td className="px-4 py-2">{log.supplier}</td>
-                <td className="px-4 py-2">{log.description}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="mt-8">
-        <h3 className="text-lg font-bold text-neutral-200 mb-4">Add New Log</h3>
-        <form>
-          <div className="flex flex-col mb-4">
-            <label className="text-neutral-200 mb-2">Date</label>
-            <input
-              type="date"
-              value={newLog.date}
-              onChange={(e) => setNewLog({ ...newLog, date: e.target.value })}
-              className="bg-neutral-700 py-2 px-4 rounded-md text-neutral-200"
-            />
-          </div>
-          <div className="flex flex-col mb-4">
-            <label className="text-neutral-200 mb-2">Quantity</label>
-            <input
-              type="text"
-              value={newLog.quantity}
-              onChange={(e) => setNewLog({ ...newLog, quantity: e.target.value })}
-              className="bg-neutral-700 py-2 px-4 rounded-md text-neutral-200"
-            />
-          </div>
-          <div className="flex flex-col mb-4">
-            <label className="text-neutral-200 mb-2">Supplier</label>
-            <input
-              type="text"
-              value={newLog.supplier}
-              onChange={(e) => setNewLog({ ...newLog, supplier: e.target.value })}
-              className="bg-neutral-700 py-2 px-4 rounded-md text-neutral-200"
-            />
-          </div>
-          <div className="flex flex-col mb-4">
-            <label className="text-neutral-200 mb-2">Description</label>
-            <textarea
-              value={newLog.description}
-              onChange={(e) => setNewLog({ ...newLog, description: e.target.value })}
-              className="bg-neutral-700 py-2 px-4 rounded-md text-neutral-200 h-32"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={handleAddLog}
-            className={clsx(
-              'bg-neutral-700 hover:bg-neutral-600 transition duration-200 py-2 px-4 rounded-md text-neutral-200',
-              'flex items-center gap-2'
-            )}
-          >
-            <Circle size={18} />
-            Add Log
-          </button>
-        </form>
-      </div>
+      <h2 className="text-xl font-bold mb-2">Procurement Logs</h2>
+      <ul>
+        {logs.map((log) => (
+          <li key={log.id} className="py-2 border-b border-gray-600">
+            <span className="text-gray-200">{log.date}</span>
+            <span className="ml-2 text-gray-100">{log.log}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
