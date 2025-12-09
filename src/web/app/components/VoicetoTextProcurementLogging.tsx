@@ -1,63 +1,81 @@
 jsx
 import React, { useState } from 'react';
-import { Mic2, XCircle } from 'lucide-react';
+import LucideMicrophone from 'lucide-react';
+import LucideCheckCircle from 'lucide-react';
+import LucideXCircle from 'lucide-react';
 
 const VoiceToTextProcurement = () => {
-  const [isListening, setIsListening] = useState(false);
-  const [transcription, setTranscription] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [transcript, setTranscript] = useState('');
+  const [status, setStatus] = useState('');
 
-  const startListening = async () => {
-    if ('webkitSpeechRecognition' in window) {
-      const recognition = new (window as any).webkitSpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = true;
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
 
-      recognition.onstart = () => setIsListening(true);
-      recognition.onerror = (event) => {
-        console.error('Error: ' + event.error);
-        setIsListening(false);
-      };
-      recognition.onend = () => setIsListening(false);
-
-      recognition.onresult = (event) => {
-        const transcript = Array.from(event.results)
-          .map((result) => result[0].transcript)
-          .join('');
-        setTranscription(transcript);
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          const audioChunks = [];
+          mediaRecorder.addEventListener('dataavailable', (e) => audioChunks.push(e.data));
+          mediaRecorder.stop();
+          const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+          convertSpeechToText(audioBlob);
+        }
       };
 
-      recognition.start();
-    } else {
-      console.error('SpeechRecognition not supported in this browser.');
+      mediaRecorder.start();
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
     }
   };
 
-  const stopListening = () => {
-    setIsListening(false);
+  const stopRecording = () => {
+    setStatus('Converting...');
+  };
+
+  const convertSpeechToText = async (audioBlob) => {
+    const formData = new FormData();
+    formData.append('file', audioBlob, 'recording.wav');
+
+    try {
+      const response = await fetch('/api/voice-to-text', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Conversion failed');
+      }
+
+      const result = await response.json();
+      setTranscript(result.transcript);
+      setStatus('Converted!');
+    } catch (error) {
+      console.error('Error converting speech to text:', error);
+      setStatus('Failed to convert.');
+    }
   };
 
   return (
-    <div className="bg-[#1a1b24] text-white p-4 rounded-lg shadow-md">
-      <h2 className="text-xl font-bold mb-4">Voice-to-Text Procurement Logging</h2>
-      {isListening ? (
-        <button
-          onClick={stopListening}
-          className="flex items-center justify-center bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition"
-        >
-          Stop Listening <XCircle className="ml-2 h-5 w-5" />
-        </button>
-      ) : (
-        <button
-          onClick={startListening}
-          className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition"
-        >
-          Start Listening <Mic2 className="ml-2 h-5 w-5" />
-        </button>
-      )}
-      {transcription && (
-        <div className="mt-4 bg-[#31333d] p-4 rounded-lg shadow-md">
-          <p>Transcription:</p>
-          <pre className="text-sm">{transcription}</pre>
+    <div className="bg-[#121214] p-8 rounded-lg shadow-md flex flex-col items-center justify-center space-y-6">
+      <LucideMicrophone
+        size={32}
+        strokeWidth={2.5}
+        color="#fff"
+        onClick={() => {
+          if (!isRecording) startRecording();
+          else stopRecording();
+        }}
+        className={`cursor-pointer ${isRecording ? 'text-[#0ea5e9]' : 'text-white'}`}
+      />
+      <div className="text-center">
+        <h2 className="text-lg font-bold text-white mb-2">{isRecording ? 'Recording...' : 'Voice-to-Text Procurement'}</h2>
+        {status && <p className={`text-sm ${status.includes('Failed') ? 'text-red-500' : status.includes('Converted') ? 'text-green-500' : 'text-gray-300'}`}>{status}</p>}
+      </div>
+      {transcript && (
+        <div className="bg-[#2c2c34] p-4 rounded-lg w-full">
+          <pre className="text-white overflow-y-auto max-h-64">{transcript}</pre>
         </div>
       )}
     </div>
