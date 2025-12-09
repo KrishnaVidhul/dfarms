@@ -1,62 +1,63 @@
 // @ts-nocheck
-import { useClient } from 'next';
-import { Activity, Circle } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { clsx } from 'clsx';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-
 'use client';
 
-const data = [
-  { name: 'Jan', value: 100 },
-  { name: 'Feb', value: 120 },
-  { name: 'Mar', value: 140 },
-  { name: 'Apr', value: 160 },
-  { name: 'May', value: 180 },
-  { name: 'Jun', value: 200 },
+import React, { useState, useEffect } from 'react';
+import { Activity } from 'lucide-react';
+import { LineChart, Line } from 'recharts';
+
+const mockData = [
+  { name: 'Jan', moisture: 50, temperature: 20 },
+  { name: 'Feb', moisture: 60, temperature: 22 },
+  { name: 'Mar', moisture: 55, temperature: 25 },
+  { name: 'Apr', moisture: 65, temperature: 28 },
+  { name: 'May', moisture: 70, temperature: 30 },
+  { name: 'Jun', moisture: 75, temperature: 32 },
+  { name: 'Jul', moisture: 80, temperature: 35 },
+  { name: 'Aug', moisture: 85, temperature: 38 },
+  { name: 'Sep', moisture: 80, temperature: 32 },
+  { name: 'Oct', moisture: 75, temperature: 28 },
+  { name: 'Nov', moisture: 70, temperature: 25 },
+  { name: 'Dec', moisture: 65, temperature: 22 },
 ];
 
 export default function Page() {
   const [waterLevel, setWaterLevel] = useState(50);
-  const [soilMoisture, setSoilMoisture] = useState(60);
+  const [moistureLevel, setMoistureLevel] = useState(50);
+  const [temperature, setTemperature] = useState(20);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
-      setWaterLevel((prevValue) => prevValue + 1);
-      setSoilMoisture((prevValue) => prevValue + 0.5);
+      setWaterLevel(Math.floor(Math.random() * 100));
+      setMoistureLevel(Math.floor(Math.random() * 100));
+      setTemperature(Math.floor(Math.random() * 40));
     }, 1000);
-
     return () => clearInterval(intervalId);
   }, []);
 
   return (
-    <div className="flex flex-col p-4 bg-gray-800 rounded-lg">
-      <h2 className="text-lg font-bold text-white mb-4">Smart Irrigation Controller</h2>
-      <div className="flex justify-between mb-4">
-        <div className="flex items-center">
-          <Circle size={24} className="text-blue-500" />
-          <span className="ml-2 text-white">Water Level: {waterLevel}%</span>
+    <div className="flex flex-col items-center justify-center p-4 border border-gray-600 rounded-lg">
+      <h2 className="text-lg font-bold text-gray-200 mb-4">Smart Irrigation Controller</h2>
+      <div className="flex flex-row justify-between w-full mb-4">
+        <div className="flex flex-col items-center justify-center">
+          <Activity size={24} className="text-gray-200 mb-2" />
+          <h3 className="text-sm font-bold text-gray-200">Water Level</h3>
+          <p className="text-3xl font-bold text-gray-200">{waterLevel}%</p>
         </div>
-        <div className="flex items-center">
-          <Activity size={24} className="text-green-500" />
-          <span className="ml-2 text-white">Soil Moisture: {soilMoisture}%</span>
+        <div className="flex flex-col items-center justify-center">
+          <Activity size={24} className="text-gray-200 mb-2" />
+          <h3 className="text-sm font-bold text-gray-200">Moisture Level</h3>
+          <p className="text-3xl font-bold text-gray-200">{moistureLevel}%</p>
+        </div>
+        <div className="flex flex-col items-center justify-center">
+          <Activity size={24} className="text-gray-200 mb-2" />
+          <h3 className="text-sm font-bold text-gray-200">Temperature</h3>
+          <p className="text-3xl font-bold text-gray-200">{temperature}°C</p>
         </div>
       </div>
-      <LineChart width={500} height={200} data={data}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" />
-        <YAxis />
-        <Tooltip />
-        <Line type="monotone" dataKey="value" stroke="#8884d8" activeDot={{ r: 8 }} />
+      <LineChart width={400} height={200} data={mockData}>
+        <Line type="monotone" dataKey="moisture" stroke="#4CAF50" />
+        <Line type="monotone" dataKey="temperature" stroke="#FF9800" />
       </LineChart>
-      <button
-        className={clsx(
-          'mt-4 py-2 px-4 bg-blue-500 text-white rounded-lg',
-          'hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500'
-        )}
-      >
-        Start Irrigation
-      </button>
     </div>
   );
 }
