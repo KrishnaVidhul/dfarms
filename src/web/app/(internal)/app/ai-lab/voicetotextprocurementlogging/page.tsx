@@ -1,71 +1,68 @@
 // @ts-nocheck
+import { useState } from 'react';
+import { Activity } from 'lucide-react';
+import clsx from 'clsx';
+
 'use client';
 
-import { Activity, Box, Circle, User } from 'lucide-react';
-import { useState } from 'react';
-import { clsx } from 'clsx';
+const procurementLogs = [
+  { id: 1, date: '2024-09-01', description: 'Ordered 100 seeds', quantity: 100, unitPrice: 5.0 },
+  { id: 2, date: '2024-09-05', description: 'Ordered 50 fertilizers', quantity: 50, unitPrice: 10.0 },
+  { id: 3, date: '2024-09-10', description: 'Ordered 200 pesticides', quantity: 200, unitPrice: 8.0 },
+];
 
 export default function Page() {
-  const [transcript, setTranscript] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
-  const [logs, setLogs] = useState([
-    { id: 1, date: '2024-09-16', transcript: 'Order for 100 seeds' },
-    { id: 2, date: '2024-09-17', transcript: 'Request for fertilizer quote' },
-  ]);
+  const [speech, setSpeech] = useState('');
+  const [logs, setLogs] = useState(procurementLogs);
 
-  const handleStartRecording = () => {
-    setIsRecording(true);
-  };
-
-  const handleStopRecording = () => {
-    setIsRecording(false);
-    setLogs([...logs, { id: logs.length + 1, date: new Date().toISOString().split('T')[0], transcript }]);
-    setTranscript('');
-  };
-
-  const handleTranscriptChange = (e) => {
-    setTranscript(e.target.value);
+  const handleSpeech = () => {
+    const speechText = speech;
+    const log = {
+      id: logs.length + 1,
+      date: '2024-09-15',
+      description: speechText,
+      quantity: 0,
+      unitPrice: 0.0,
+    };
+    setLogs([...logs, log]);
+    setSpeech('');
   };
 
   return (
-    <div className="p-4 bg-gray-800 rounded">
-      <h2 className="text-lg font-bold text-gray-100 mb-4">Voice-to-Text Procurement Logging</h2>
+    <div className="container mx-auto p-4 pt-6 md:p-6 dark:bg-gray-800 dark:text-gray-100">
       <div className="flex justify-between mb-4">
-        <button
-          className={clsx(
-            'rounded py-2 px-4 text-gray-100',
-            isRecording ? 'bg-green-500 hover:bg-green-600' : 'bg-blue-500 hover:bg-blue-600'
-          )}
-          onClick={isRecording ? handleStopRecording : handleStartRecording}
-        >
-          {isRecording ? <Activity size={20} className="mr-2" /> : <Circle size={20} className="mr-2" />}
-          {isRecording ? 'Stop Recording' : 'Start Recording'}
-        </button>
-        <button className="rounded py-2 px-4 text-gray-100 bg-orange-500 hover:bg-orange-600">
-          <Box size={20} className="mr-2" />
-          View Logs
-        </button>
+        <h2 className="text-2xl font-bold">Voice-to-Text Procurement Logging</h2>
+        <Activity className="w-6 h-6 text-gray-500 dark:text-gray-400" />
       </div>
-      <div className="mb-4">
-        <textarea
-          className="w-full p-2 text-gray-100 bg-gray-700 rounded"
-          rows={5}
-          value={transcript}
-          onChange={handleTranscriptChange}
-          placeholder="Transcript will appear here..."
-        />
+      <input
+        type="text"
+        value={speech}
+        onChange={(e) => setSpeech(e.target.value)}
+        placeholder="Speak to log procurement..."
+        className={clsx(
+          'w-full p-2 pl-10 text-sm text-gray-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-600 dark:bg-gray-700 dark:text-gray-100',
+          'focus:dark:ring-gray-600'
+        )}
+      />
+      <button
+        onClick={handleSpeech}
+        className="mt-2 py-2 px-4 text-sm text-gray-100 bg-gray-600 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-500"
+      >
+        Log Procurement
+      </button>
+      <div className="mt-6">
+        <h3 className="text-lg font-bold mb-2">Procurement Logs</h3>
+        <ul>
+          {logs.map((log) => (
+            <li key={log.id} className="py-2 border-b border-gray-200 dark:border-gray-700">
+              <span className="text-gray-500 dark:text-gray-400">{log.date}</span>
+              <span className="ml-2 text-gray-700 dark:text-gray-100">{log.description}</span>
+              <span className="ml-2 text-gray-500 dark:text-gray-400">Quantity: {log.quantity}</span>
+              <span className="ml-2 text-gray-500 dark:text-gray-400">Unit Price: {log.unitPrice}</span>
+            </li>
+          ))}
+        </ul>
       </div>
-      <h3 className="text-lg font-bold text-gray-100 mb-2">Logs</h3>
-      <ul>
-        {logs.map((log) => (
-          <li key={log.id} className="py-2 border-b border-gray-600">
-            <div className="flex justify-between">
-              <span className="text-gray-100">{log.date}</span>
-              <span className="text-gray-100">{log.transcript}</span>
-            </div>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
