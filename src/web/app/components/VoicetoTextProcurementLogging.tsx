@@ -1,84 +1,62 @@
 jsx
-import React, { useState } from 'react';
-import { HiMicrophone } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { VoiceRecognition } from 'speech-recognition-api-wrapper';
+import LucideMic from 'lucide-react';
 import { useTheme } from 'next-themes';
 
-const VoiceToTextLogging = () => {
-  const { theme } = useTheme();
+const VoiceToTextProcurement = () => {
   const [transcript, setTranscript] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const { theme } = useTheme();
 
-  const startRecording = async () => {
-    if (!('webkitSpeechRecognition' in window)) {
-      alert('Sorry, your browser does not support voice recognition.');
-      return;
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
     }
+  }, [theme]);
 
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-
-    recognition.onresult = (event) => {
-      const lastResult = event.results.length - 1;
-      setTranscript((prevTranscript) => prevTranscript + event.results[lastResult][0].transcript);
-    };
-
-    recognition.onerror = (event) => {
-      console.error('Speech recognition error:', event.error);
-    };
-
-    recognition.onend = () => {
-      recognition.start();
-    };
-
-    recognition.start();
+  const startListening = () => {
+    setIsRecording(true);
+    VoiceRecognition.startListening();
   };
 
-  const clearTranscript = () => {
-    setTranscript('');
+  const stopListening = () => {
+    setIsRecording(false);
+    VoiceRecognition.stopListening();
   };
+
+  useEffect(() => {
+    VoiceRecognition.onResult((result) => {
+      setTranscript(result);
+    });
+
+    return () => {
+      VoiceRecognition.abortListening();
+    };
+  }, []);
 
   return (
-    <div
-      className={`bg-${theme === 'dark' ? 'gray-900' : 'white'} text-${
-        theme === 'dark' ? 'gray-300' : 'gray-800'
-      } p-6 rounded-lg shadow-md flex items-center justify-between`}
-    >
-      <div className="flex flex-col">
-        <HiMicrophone size={24} />
-        <p className="mt-2">Voice to Text</p>
-      </div>
-      <button
-        onClick={startRecording}
-        className={`bg-${
-          theme === 'dark' ? 'blue-500' : 'purple-500'
-        } text-white px-4 py-2 rounded-full hover:bg-${
-          theme === 'dark' ? 'blue-600' : 'purple-600'
-        }`}
-      >
-        Start Recording
-      </button>
-      <div className="flex flex-col">
-        <p className="text-sm">Transcript:</p>
-        <pre className="mt-2 bg-${
-          theme === 'dark' ? 'gray-800' : 'gray-100'
-        } text-${
-          theme === 'dark' ? 'gray-300' : 'gray-900'
-        } p-2 rounded-lg break-all">
-          {transcript}
-        </pre>
+    <div className="p-4 bg-gray-800 dark:bg-black rounded-lg shadow-md">
+      <h2 className="text-xl font-bold mb-2">Voice-to-Text Procurement Logging</h2>
+      <div className="flex items-center justify-between border p-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition duration-300">
         <button
-          onClick={clearTranscript}
-          className={`mt-2 bg-${
-            theme === 'dark' ? 'red-500' : 'orange-500'
-          } text-white px-4 py-2 rounded-full hover:bg-${
-            theme === 'dark' ? 'red-600' : 'orange-600'
+          onClick={isRecording ? stopListening : startListening}
+          className={`bg-blue-500 text-white font-bold py-2 px-4 rounded-full focus:outline-none ${
+            isRecording ? 'bg-red-500' : ''
           }`}
         >
-          Clear
+          {isRecording ? <LucideMic className="mr-2" /> : <LucideMic className="mr-2 transform rotate-180" />}
+          {isRecording ? 'Stop Listening' : 'Start Listening'}
         </button>
+      </div>
+      <div className="mt-4 p-2 bg-gray-700 dark:bg-gray-600 rounded-lg">
+        <p className="text-white font-semibold">Transcript:</p>
+        <p className="text-gray-300">{transcript}</p>
       </div>
     </div>
   );
 };
 
-export default VoiceToTextLogging;
+export default VoiceToTextProcurement;
