@@ -1,55 +1,83 @@
 jsx
 import React, { useState } from 'react';
-import { LuMicrophone2 } from 'lucide-react';
+import { Mic, Microphone2Off } from 'lucide-react';
+import { useTheme } from '@/components/theme-provider';
 
-const VoiceToTextProcurement = () => {
+const VoiceToTextProcurementLogging = () => {
+  const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
+  const { isDarkMode } = useTheme();
 
-  const handleVoiceCommand = async () => {
-    if (!('webkitSpeechRecognition' in window)) {
-      alert('Web Speech API is not supported by your browser.');
-      return;
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+
+      let partialTranscript = '';
+      mediaRecorder.ondataavailable = (event) => {
+        if (typeof event.data === 'string') {
+          partialTranscript += event.data;
+        } else if (event.data.size > 0) {
+          const audioBlob = event.data;
+          // Use Web Speech API to convert speech to text
+          const recognition = new webkitSpeechRecognition();
+          recognition.continuous = false;
+          recognition.interimResults = true;
+          recognition.onresult = (event) => {
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+              partialTranscript += event.results[i][0].transcript;
+            }
+            setTranscript(partialTranscript);
+          };
+          recognition.onerror = (error) => {
+            console.error('Recognition error:', error);
+          };
+          recognition.onend = () => {
+            mediaRecorder.stop();
+            setIsRecording(false);
+          };
+          recognition.start();
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        setTranscript(partialTranscript);
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error('Error accessing microphone:', err);
     }
+  };
 
-    const recognition = new webkitSpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    recognition.onresult = (event) => {
-      const text = event.results[0][0].transcript;
-      setTranscript(text);
-      // Here you can add the logic to process the voice command and log it
-    };
-
-    recognition.onerror = (event) => {
-      console.error('Error occurred: ', event.error);
-    };
-
-    recognition.onend = () => {
-      console.log('Speech recognition service disconnected');
-    };
-
-    recognition.start();
+  const stopRecording = () => {
+    setIsRecording(false);
   };
 
   return (
-    <div className="bg-gray-900 text-white p-4 rounded-md shadow-lg">
-      <h2 className="text-xl font-bold mb-2">Voice-to-Text Procurement Logging</h2>
+    <div className={`p-6 rounded-lg shadow-md bg-${isDarkMode ? 'dark' : 'white'} text-${isDarkMode ? 'white' : 'black'}`}>
+      <h2 className="text-xl font-bold">Voice-to-Text Procurement Logging</h2>
       <button
-        onClick={handleVoiceCommand}
-        className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md flex items-center justify-center"
+        onClick={isRecording ? stopRecording : startRecording}
+        className={`mt-4 p-3 rounded-lg border hover:bg-${isDarkMode ? 'gray-700' : 'gray-100'} text-${isDarkMode ? 'white' : 'black'}`}
+        disabled={!navigator.mediaDevices.getUserMedia}
       >
-        <LuMicrophone2 className="mr-2" />
-        Record Voice Command
+        {isRecording ? (
+          <Microphone2Off className="w-6 h-6 mr-2" />
+        ) : (
+          <Mic className="w-6 h-6 mr-2" />
+        )}
+        {isRecording ? 'Stop Recording' : 'Start Recording'}
       </button>
       {transcript && (
-        <div className="mt-4 bg-gray-800 p-3 rounded-lg">
-          <p>Transcript:</p>
-          <pre>{transcript}</pre>
+        <div className="mt-4 bg-${isDarkMode ? 'gray-800' : 'gray-100'} p-3 rounded-lg border">
+          <p className="text-sm">Transcript:</p>
+          <pre className="mt-2">{transcript}</pre>
         </div>
       )}
     </div>
   );
 };
 
-export default VoiceToTextProcurement;
+export default VoiceToTextProcurementLogging;
