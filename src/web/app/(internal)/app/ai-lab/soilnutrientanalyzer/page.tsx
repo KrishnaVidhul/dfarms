@@ -1,57 +1,37 @@
 // @ts-nocheck
-import { useClient } from 'next';
-import { SoilNutrient } from '../mock/data/SoilNutrient';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import { Circle } from 'lucide-react';
 import { clsx } from 'clsx';
+import { Activity } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 'use client';
 
-const soilNutrientData = [
-  { month: 'Jan', nitrogen: 50, phosphorus: 20, potassium: 30 },
-  { month: 'Feb', nitrogen: 40, phosphorus: 25, potassium: 35 },
-  { month: 'Mar', nitrogen: 55, phosphorus: 22, potassium: 32 },
-  { month: 'Apr', nitrogen: 45, phosphorus: 28, potassium: 38 },
-  { month: 'May', nitrogen: 60, phosphorus: 24, potassium: 36 },
-  { month: 'Jun', nitrogen: 48, phosphorus: 26, potassium: 34 },
+const mockData = [
+  { name: 'Jan', N: 100, P: 50, K: 200 },
+  { name: 'Feb', N: 120, P: 60, K: 220 },
+  { name: 'Mar', N: 140, P: 70, K: 240 },
+  { name: 'Apr', N: 160, P: 80, K: 260 },
+  { name: 'May', N: 180, P: 90, K: 280 },
 ];
 
 export default function Page() {
   return (
-    <div className="bg-gray-800 p-4 rounded-lg">
-      <div className="flex justify-between mb-4">
-        <h2 className="text-lg font-bold text-gray-200">Soil Nutrient Analyzer</h2>
-        <Circle size={24} className="text-gray-400" />
+    <div className={clsx('flex', 'flex-col', 'p-4', 'bg-gray-800', 'rounded-lg', 'shadow-lg')}>
+      <div className={clsx('flex', 'items-center', 'justify-between', 'mb-4')}>
+        <h2 className={clsx('text-lg', 'font-bold', 'text-gray-200')}>Soil Nutrient Analyzer</h2>
+        <Activity size={24} className={clsx('text-gray-400')} />
       </div>
-      <BarChart
-        width={500}
-        height={300}
-        data={soilNutrientData}
-        margin={{
-          top: 5,
-          right: 30,
-          left: 20,
-          bottom: 5,
-        }}
-      >
+      <LineChart width={500} height={300} data={mockData}>
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="month" />
+        <XAxis dataKey="name" />
         <YAxis />
         <Tooltip />
-        <Bar dataKey="nitrogen" fill="#8884d8" />
-        <Bar dataKey="phosphorus" fill="#82ca9d" />
-        <Bar dataKey="potassium" fill="#ffc107" />
-      </BarChart>
-      <div className="mt-4">
-        <h3 className="text-lg font-bold text-gray-200">Soil Nutrient Levels</h3>
-        <ul className={clsx('list-none', 'mb-0', 'p-0')}>
-          {SoilNutrient.map((nutrient) => (
-            <li key={nutrient.id} className="flex justify-between py-2">
-              <span className="text-gray-200">{nutrient.name}</span>
-              <span className="text-gray-400">{nutrient.level}%</span>
-            </li>
-          ))}
-        </ul>
+        <Legend />
+        <Line type="monotone" dataKey="N" stroke="#8884d8" activeDot={{ r: 8 }} />
+        <Line type="monotone" dataKey="P" stroke="#82ca9d" />
+        <Line type="monotone" dataKey="K" stroke="#ffc107" />
+      </LineChart>
+      <div className={clsx('flex', 'flex-col', 'mt-4')}>
+        <p className={clsx('text-gray-200', 'text-sm')}>N: Nitrogen, P: Phosphorus, K: Potassium</p>
       </div>
     </div>
   );
