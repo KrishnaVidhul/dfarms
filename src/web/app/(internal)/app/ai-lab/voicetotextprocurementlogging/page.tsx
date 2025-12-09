@@ -1,78 +1,82 @@
 // @ts-nocheck
-'use client';
-
-import { Activity } from 'lucide-react';
 import { useState } from 'react';
+import { Circle, User } from 'lucide-react';
 import { clsx } from 'clsx';
 
-const mockLogs = [
-  { id: 1, date: '2024-09-16', text: 'Procured 100kg of wheat from Farmer John' },
-  { id: 2, date: '2024-09-17', text: 'Procured 50kg of maize from Farmer Jane' },
-  { id: 3, date: '2024-09-18', text: 'Procured 200kg of soybeans from Farmer Bob' },
+'use client';
+
+const procurementLogs = [
+  { id: 1, date: '2024-09-16', description: 'Procured 1000 kg of wheat', amount: 5000 },
+  { id: 2, date: '2024-09-17', description: 'Procured 500 kg of rice', amount: 2000 },
+  { id: 3, date: '2024-09-18', description: 'Procured 2000 kg of maize', amount: 8000 },
 ];
 
 export default function Page() {
-  const [logs, setLogs] = useState(mockLogs);
-  const [newLog, setNewLog] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
+  const [logDescription, setLogDescription] = useState('');
+  const [logAmount, setLogAmount] = useState(0);
+  const [logs, setLogs] = useState(procurementLogs);
 
-  const handleRecord = () => {
-    setIsRecording(true);
-    // Simulate voice-to-text recording
-    setTimeout(() => {
-      setIsRecording(false);
-      setNewLog('Procured 150kg of rice from Farmer Alice');
-    }, 2000);
-  };
-
-  const handleSaveLog = () => {
-    if (newLog) {
-      setLogs([...logs, { id: logs.length + 1, date: '2024-09-19', text: newLog }]);
-      setNewLog('');
+  const handleLogSubmission = () => {
+    if (logDescription && logAmount) {
+      const newLog = {
+        id: logs.length + 1,
+        date: new Date().toISOString().split('T')[0],
+        description: logDescription,
+        amount: logAmount,
+      };
+      setLogs([...logs, newLog]);
+      setLogDescription('');
+      setLogAmount(0);
     }
   };
 
   return (
-    <div className="p-4 bg-gray-800 rounded-md">
-      <h2 className="text-lg font-bold text-white mb-2">Voice-to-Text Procurement Logging</h2>
-      <div className="flex items-center mb-4">
-        <button
-          className={clsx(
-            'px-4 py-2 text-white rounded-md',
-            isRecording ? 'bg-orange-500' : 'bg-blue-500 hover:bg-blue-700'
-          )}
-          onClick={handleRecord}
-        >
-          {isRecording ? 'Recording...' : 'Record'}
-        </button>
-        <button
-          className="px-4 py-2 text-white rounded-md bg-blue-500 hover:bg-blue-700 ml-2"
-          onClick={handleSaveLog}
-        >
-          Save Log
-        </button>
+    <div className="flex flex-col p-4 bg-gray-800 rounded-md shadow-md">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-bold text-gray-200">Voice-to-Text Procurement Logging</h2>
+        <Circle className="text-gray-500" size={20} />
       </div>
-      <div className="mb-4">
-        <label className="text-white block mb-2">New Log:</label>
-        <textarea
-          className="w-full p-2 text-white bg-gray-700 rounded-md"
-          value={newLog}
-          onChange={(e) => setNewLog(e.target.value)}
-          rows={3}
+      <div className="flex flex-col mb-4">
+        <label className="text-gray-400 mb-2">Log Description:</label>
+        <input
+          type="text"
+          value={logDescription}
+          onChange={(e) => setLogDescription(e.target.value)}
+          className={clsx(
+            'py-2 pl-10 text-sm text-gray-200 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-gray-500 focus:border-gray-500',
+            { 'border-red-500': !logDescription }
+          )}
+          placeholder="Enter log description"
         />
       </div>
-      <h3 className="text-lg font-bold text-white mb-2">Procurement Logs:</h3>
-      <ul>
+      <div className="flex flex-col mb-4">
+        <label className="text-gray-400 mb-2">Log Amount:</label>
+        <input
+          type="number"
+          value={logAmount}
+          onChange={(e) => setLogAmount(e.target.valueAsNumber)}
+          className={clsx(
+            'py-2 pl-10 text-sm text-gray-200 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-gray-500 focus:border-gray-500',
+            { 'border-red-500': !logAmount }
+          )}
+          placeholder="Enter log amount"
+        />
+      </div>
+      <button
+        onClick={handleLogSubmission}
+        className="py-2 px-4 text-sm text-gray-200 bg-gray-600 rounded-md hover:bg-gray-500"
+      >
+        <User className="text-gray-200 mr-2" size={16} /> Log Procurement
+      </button>
+      <div className="mt-4">
+        <h3 className="text-lg font-bold text-gray-200 mb-2">Procurement Logs:</h3>
         {logs.map((log) => (
-          <li key={log.id} className="py-2 border-b border-gray-600">
-            <div className="flex items-center">
-              <Activity className="text-white mr-2" size={20} />
-              <span className="text-white">{log.text}</span>
-            </div>
-            <span className="text-gray-500 text-sm">{log.date}</span>
-          </li>
+          <div key={log.id} className="flex justify-between items-center py-2 px-4 bg-gray-700 rounded-md mb-2">
+            <span className="text-gray-200">{log.description}</span>
+            <span className="text-gray-200">{log.amount}</span>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }
