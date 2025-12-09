@@ -1,83 +1,84 @@
 jsx
 import React, { useState } from 'react';
-import { Mic, Microphone2Off } from 'lucide-react';
-import { useTheme } from '@/components/theme-provider';
+import { HiMicrophone } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
-const VoiceToTextProcurementLogging = () => {
-  const [isRecording, setIsRecording] = useState(false);
+const VoiceToTextLogging = () => {
+  const { theme } = useTheme();
   const [transcript, setTranscript] = useState('');
-  const { isDarkMode } = useTheme();
 
   const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-
-      let partialTranscript = '';
-      mediaRecorder.ondataavailable = (event) => {
-        if (typeof event.data === 'string') {
-          partialTranscript += event.data;
-        } else if (event.data.size > 0) {
-          const audioBlob = event.data;
-          // Use Web Speech API to convert speech to text
-          const recognition = new webkitSpeechRecognition();
-          recognition.continuous = false;
-          recognition.interimResults = true;
-          recognition.onresult = (event) => {
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-              partialTranscript += event.results[i][0].transcript;
-            }
-            setTranscript(partialTranscript);
-          };
-          recognition.onerror = (error) => {
-            console.error('Recognition error:', error);
-          };
-          recognition.onend = () => {
-            mediaRecorder.stop();
-            setIsRecording(false);
-          };
-          recognition.start();
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        setTranscript(partialTranscript);
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (err) {
-      console.error('Error accessing microphone:', err);
+    if (!('webkitSpeechRecognition' in window)) {
+      alert('Sorry, your browser does not support voice recognition.');
+      return;
     }
+
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+
+    recognition.onresult = (event) => {
+      const lastResult = event.results.length - 1;
+      setTranscript((prevTranscript) => prevTranscript + event.results[lastResult][0].transcript);
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+    };
+
+    recognition.onend = () => {
+      recognition.start();
+    };
+
+    recognition.start();
   };
 
-  const stopRecording = () => {
-    setIsRecording(false);
+  const clearTranscript = () => {
+    setTranscript('');
   };
 
   return (
-    <div className={`p-6 rounded-lg shadow-md bg-${isDarkMode ? 'dark' : 'white'} text-${isDarkMode ? 'white' : 'black'}`}>
-      <h2 className="text-xl font-bold">Voice-to-Text Procurement Logging</h2>
+    <div
+      className={`bg-${theme === 'dark' ? 'gray-900' : 'white'} text-${
+        theme === 'dark' ? 'gray-300' : 'gray-800'
+      } p-6 rounded-lg shadow-md flex items-center justify-between`}
+    >
+      <div className="flex flex-col">
+        <HiMicrophone size={24} />
+        <p className="mt-2">Voice to Text</p>
+      </div>
       <button
-        onClick={isRecording ? stopRecording : startRecording}
-        className={`mt-4 p-3 rounded-lg border hover:bg-${isDarkMode ? 'gray-700' : 'gray-100'} text-${isDarkMode ? 'white' : 'black'}`}
-        disabled={!navigator.mediaDevices.getUserMedia}
+        onClick={startRecording}
+        className={`bg-${
+          theme === 'dark' ? 'blue-500' : 'purple-500'
+        } text-white px-4 py-2 rounded-full hover:bg-${
+          theme === 'dark' ? 'blue-600' : 'purple-600'
+        }`}
       >
-        {isRecording ? (
-          <Microphone2Off className="w-6 h-6 mr-2" />
-        ) : (
-          <Mic className="w-6 h-6 mr-2" />
-        )}
-        {isRecording ? 'Stop Recording' : 'Start Recording'}
+        Start Recording
       </button>
-      {transcript && (
-        <div className="mt-4 bg-${isDarkMode ? 'gray-800' : 'gray-100'} p-3 rounded-lg border">
-          <p className="text-sm">Transcript:</p>
-          <pre className="mt-2">{transcript}</pre>
-        </div>
-      )}
+      <div className="flex flex-col">
+        <p className="text-sm">Transcript:</p>
+        <pre className="mt-2 bg-${
+          theme === 'dark' ? 'gray-800' : 'gray-100'
+        } text-${
+          theme === 'dark' ? 'gray-300' : 'gray-900'
+        } p-2 rounded-lg break-all">
+          {transcript}
+        </pre>
+        <button
+          onClick={clearTranscript}
+          className={`mt-2 bg-${
+            theme === 'dark' ? 'red-500' : 'orange-500'
+          } text-white px-4 py-2 rounded-full hover:bg-${
+            theme === 'dark' ? 'red-600' : 'orange-600'
+          }`}
+        >
+          Clear
+        </button>
+      </div>
     </div>
   );
 };
 
-export default VoiceToTextProcurementLogging;
+export default VoiceToTextLogging;
