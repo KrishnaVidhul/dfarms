@@ -1,58 +1,70 @@
 // @ts-nocheck
 'use client';
 
-import { Activity, Circle } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import { useState } from 'react';
 import { clsx } from 'clsx';
+import { tw } from 'tailwind-merge';
 
 export default function Page() {
-  const [voiceLog, setVoiceLog] = useState([
-    { id: 1, log: 'Ordered 100 seeds for wheat cultivation' },
-    { id: 2, log: 'Purchased 500 kg of fertilizer for corn crop' },
-    { id: 3, log: 'Received 200 liters of pesticide for pest control' },
+  const [procurementLog, setProcurementLog] = useState([
+    { id: 1, date: '2022-01-01', description: 'Purchased seeds for wheat crop' },
+    { id: 2, date: '2022-01-15', description: 'Procured fertilizers for corn crop' },
+    { id: 3, date: '2022-02-01', description: 'Bought pesticides for soybean crop' },
   ]);
 
   const [newLog, setNewLog] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
 
-  const handleVoiceLog = () => {
+  const handleStartRecording = () => {
+    setIsRecording(true);
+  };
+
+  const handleStopRecording = () => {
+    setIsRecording(false);
+  };
+
+  const handleAddLog = () => {
     if (newLog) {
-      setVoiceLog([...voiceLog, { id: voiceLog.length + 1, log: newLog }]);
+      setProcurementLog([...procurementLog, { id: procurementLog.length + 1, date: new Date().toISOString().split('T')[0], description: newLog }]);
       setNewLog('');
     }
   };
 
   return (
-    <div className="p-4 bg-gray-800 rounded-md">
-      <h2 className="text-lg font-bold text-gray-200 mb-2">Voice-to-Text Procurement Logging</h2>
-      <div className="flex justify-between mb-4">
-        <input
-          type="text"
-          value={newLog}
-          onChange={(e) => setNewLog(e.target.value)}
-          className={clsx(
-            'w-full p-2 pl-10 text-sm text-gray-200 bg-gray-700 border border-gray-600 rounded-md focus:ring-gray-500 focus:border-gray-500',
-            'dark:bg-gray-800 dark:border-gray-700'
-          )}
-          placeholder="New log..."
-        />
+    <div className={tw`flex flex-col p-4 bg-gray-800`}>
+      <h2 className={tw`text-2xl font-bold text-white mb-4`}>Voice-to-Text Procurement Logging</h2>
+      <div className={tw`flex justify-between mb-4`}>
         <button
-          onClick={handleVoiceLog}
-          className="ml-2 p-2 text-gray-200 bg-gray-600 hover:bg-gray-700 rounded-md"
+          className={clsx(tw`px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded`, isRecording ? tw`bg-gray-500 hover:bg-gray-600` : tw``)}
+          onClick={isRecording ? handleStopRecording : handleStartRecording}
         >
-          <Activity size={20} className="text-gray-200" />
-          Log
+          {isRecording ? 'Stop Recording' : 'Start Recording'}
+        </button>
+        <button
+          className={tw`px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded`}
+          onClick={handleAddLog}
+        >
+          Add Log
         </button>
       </div>
-      <ul>
-        {voiceLog.map((log) => (
-          <li key={log.id} className="py-2 border-b border-gray-600">
-            <div className="flex justify-between">
-              <span className="text-gray-200">{log.log}</span>
-              <Circle size={20} className="text-gray-400" />
+      <textarea
+        className={tw`w-full h-40 p-4 bg-gray-700 text-white border border-gray-600 rounded mb-4`}
+        placeholder="Type or speak your procurement log"
+        value={newLog}
+        onChange={(e) => setNewLog(e.target.value)}
+      />
+      <div className={tw`flex flex-col`}>
+        {procurementLog.map((log) => (
+          <div key={log.id} className={tw`flex justify-between py-2 border-b border-gray-600`}>
+            <div className={tw`flex`}>
+              <Activity size={20} className={tw`mr-2 text-gray-500`} />
+              <span className={tw`text-white`}>{log.description}</span>
             </div>
-          </li>
+            <span className={tw`text-gray-500`}>{log.date}</span>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }
