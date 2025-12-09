@@ -1,89 +1,82 @@
 jsx
-import React, { useState, useEffect } from 'react';
-import { Mic, CheckCircle2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Mic2 } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 const VoiceToTextProcurementLogging = () => {
   const [isRecording, setIsRecording] = useState(false);
-  const [text, setText] = useState('');
+  const [transcript, setTranscript] = useState('');
+  const { theme } = useTheme();
 
-  useEffect(() => {
-    let recognition;
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
 
-    if ('webkitSpeechRecognition' in window) {
-      recognition = new webkitSpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript.trim();
-        setText(transcript);
+      let audioChunks = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunks.push(event.data);
       };
-      recognition.onerror = (error) => {
-        console.error('Error occurred during speech recognition:', error);
-      };
-    } else if ('SpeechRecognition' in window) {
-      recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript.trim();
-        setText(transcript);
-      };
-      recognition.onerror = (error) => {
-        console.error('Error occurred during speech recognition:', error);
-      };
-    }
 
-    if (recognition) {
-      recognition.onend = () => setIsRecording(false);
-    }
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+        const formData = new FormData();
+        formData.append('file', audioBlob);
 
-    return () => {
-      if (recognition) {
-        recognition.stop();
-      }
-    };
-  }, []);
+        fetch('/api/transcribe', {
+          method: 'POST',
+          body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+          setTranscript(data.transcript);
+        })
+        .catch(error => console.error('Error transcribing:', error));
 
-  const startRecording = () => {
-    if (!isRecording && 'webkitSpeechRecognition' in window) {
+        audioChunks = [];
+      };
+
+      mediaRecorder.start();
       setIsRecording(true);
-      recognition.start();
-    } else if (!isRecording && 'SpeechRecognition' in window) {
-      setIsRecording(true);
-      recognition.start();
+    } catch (err) {
+      console.error('Microphone access denied: ', err);
     }
   };
 
   const stopRecording = () => {
-    setIsRecording(false);
-    recognition.stop();
+    if (audioRecorder) {
+      audioRecorder.stop();
+      setIsRecording(false);
+    }
   };
 
   return (
-    <div className="bg-gray-800 text-white p-6 rounded-lg shadow-md flex items-center justify-between">
-      <div>
-        {text ? (
-          <p className="font-semibold">{text}</p>
-        ) : (
-          <p className="opacity-75">Start speaking...</p>
-        )}
-      </div>
+    <div className={`bg-${theme === 'dark' ? 'gray-900' : 'white'} text-${
+      theme === 'dark' ? 'gray-200' : 'black'
+    } rounded-lg shadow-md p-4 flex items-center justify-between`}>
       <button
         onClick={isRecording ? stopRecording : startRecording}
-        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded inline-flex items-center"
+        className="flex items-center gap-2"
       >
         {isRecording ? (
           <>
-            <Mic className="mr-2" />
+            <Mic2 className="text-red-500" />
             Stop Recording
           </>
         ) : (
           <>
-            <Mic className="mr-2" />
+            <Mic2 />
             Start Recording
           </>
         )}
       </button>
+      {transcript && (
+        <div className="flex flex-col max-w-md">
+          <p className="font-semibold">Transcript:</p>
+          <p>{transcript}</p>
+        </div>
+      )}
     </div>
   );
 };
