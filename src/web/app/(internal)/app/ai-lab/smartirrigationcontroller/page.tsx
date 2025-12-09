@@ -1,62 +1,95 @@
 // @ts-nocheck
+import { useState } from 'react';
+import { Activity, Circle } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Activity } from 'lucide-react';
-import { LineChart, Line } from 'recharts';
-
-const mockData = [
-  { name: 'Jan', moisture: 50, temperature: 20 },
-  { name: 'Feb', moisture: 60, temperature: 22 },
-  { name: 'Mar', moisture: 55, temperature: 25 },
-  { name: 'Apr', moisture: 65, temperature: 28 },
-  { name: 'May', moisture: 70, temperature: 30 },
-  { name: 'Jun', moisture: 75, temperature: 32 },
-  { name: 'Jul', moisture: 80, temperature: 35 },
-  { name: 'Aug', moisture: 85, temperature: 38 },
-  { name: 'Sep', moisture: 80, temperature: 32 },
-  { name: 'Oct', moisture: 75, temperature: 28 },
-  { name: 'Nov', moisture: 70, temperature: 25 },
-  { name: 'Dec', moisture: 65, temperature: 22 },
+const data = [
+  {
+    name: 'Page A',
+    uv: 4000,
+    pv: 2400,
+    amt: 2400,
+  },
+  {
+    name: 'Page B',
+    uv: 3000,
+    pv: 1398,
+    amt: 2210,
+  },
+  {
+    name: 'Page C',
+    uv: 2000,
+    pv: 9800,
+    amt: 2290,
+  },
+  {
+    name: 'Page D',
+    uv: 2780,
+    pv: 3908,
+    amt: 2000,
+  },
+  {
+    name: 'Page E',
+    uv: 1890,
+    pv: 4800,
+    amt: 2181,
+  },
+  {
+    name: 'Page F',
+    uv: 2390,
+    pv: 3800,
+    amt: 2500,
+  },
+  {
+    name: 'Page G',
+    uv: 3490,
+    pv: 4300,
+    amt: 2100,
+  },
 ];
 
 export default function Page() {
   const [waterLevel, setWaterLevel] = useState(50);
-  const [moistureLevel, setMoistureLevel] = useState(50);
-  const [temperature, setTemperature] = useState(20);
-
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setWaterLevel(Math.floor(Math.random() * 100));
-      setMoistureLevel(Math.floor(Math.random() * 100));
-      setTemperature(Math.floor(Math.random() * 40));
-    }, 1000);
-    return () => clearInterval(intervalId);
-  }, []);
+  const [soilMoisture, setSoilMoisture] = useState(70);
+  const [temperature, setTemperature] = useState(25);
 
   return (
-    <div className="flex flex-col items-center justify-center p-4 border border-gray-600 rounded-lg">
-      <h2 className="text-lg font-bold text-gray-200 mb-4">Smart Irrigation Controller</h2>
-      <div className="flex flex-row justify-between w-full mb-4">
-        <div className="flex flex-col items-center justify-center">
-          <Activity size={24} className="text-gray-200 mb-2" />
-          <h3 className="text-sm font-bold text-gray-200">Water Level</h3>
-          <p className="text-3xl font-bold text-gray-200">{waterLevel}%</p>
+    <div className="p-4 bg-gray-800 rounded-lg">
+      <h2 className="text-lg font-bold text-gray-200 mb-4">
+        <Activity className="mr-2" size={20} /> Smart Irrigation Controller
+      </h2>
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="bg-gray-700 p-4 rounded-lg">
+          <h3 className="text-sm font-bold text-gray-200 mb-2">Water Level</h3>
+          <div className="flex items-center">
+            <Circle className="mr-2" size={20} />
+            <span className="text-lg font-bold text-gray-200">{waterLevel}%</span>
+          </div>
         </div>
-        <div className="flex flex-col items-center justify-center">
-          <Activity size={24} className="text-gray-200 mb-2" />
-          <h3 className="text-sm font-bold text-gray-200">Moisture Level</h3>
-          <p className="text-3xl font-bold text-gray-200">{moistureLevel}%</p>
+        <div className="bg-gray-700 p-4 rounded-lg">
+          <h3 className="text-sm font-bold text-gray-200 mb-2">Soil Moisture</h3>
+          <div className="flex items-center">
+            <Circle className="mr-2" size={20} />
+            <span className="text-lg font-bold text-gray-200">{soilMoisture}%</span>
+          </div>
         </div>
-        <div className="flex flex-col items-center justify-center">
-          <Activity size={24} className="text-gray-200 mb-2" />
-          <h3 className="text-sm font-bold text-gray-200">Temperature</h3>
-          <p className="text-3xl font-bold text-gray-200">{temperature}°C</p>
+        <div className="bg-gray-700 p-4 rounded-lg">
+          <h3 className="text-sm font-bold text-gray-200 mb-2">Temperature</h3>
+          <div className="flex items-center">
+            <Circle className="mr-2" size={20} />
+            <span className="text-lg font-bold text-gray-200">{temperature}°C</span>
+          </div>
         </div>
       </div>
-      <LineChart width={400} height={200} data={mockData}>
-        <Line type="monotone" dataKey="moisture" stroke="#4CAF50" />
-        <Line type="monotone" dataKey="temperature" stroke="#FF9800" />
+      <LineChart width={700} height={300} data={data}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="name" />
+        <YAxis />
+        <Tooltip />
+        <Line type="monotone" dataKey="pv" stroke="#8884d8" activeDot={{ r: 8 }} />
+        <Line type="monotone" dataKey="uv" stroke="#82ca9d" />
       </LineChart>
     </div>
   );
