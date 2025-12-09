@@ -9,23 +9,9 @@ Generated from UAT Session with Logistics Head (Arjun)
 | 2 | **Real-time Rate Widget Overlay** | Procurement | Medium | Medium | Show live market price difference (e.g., '+5% vs Market') next to the price input. |
 | 3 | **Live Logistics Map** | Logistics | Medium | High | Mapbox integration to show warehouse and truck locations. |
 
-## Feature: WhatsApp Price Bot
-**Source:** AgTech Trends 2025
-**Idea:** Allow farmers to send 'Rate Tur Dal' on WhatsApp and get instant price response.
-**Priority:** Medium
-**Status:** PROPOSED
-
-
 ## Feature: Reverse Auction Bidding
 **Source:** Competitor Analysis (Ninjacart)
 **Idea:** Allow suppliers to bid down prices for a buy order in real-time for 30 mins.
-**Priority:** Medium
-**Status:** PROPOSED
-
-
-## Feature: Voice-First Navigation
-**Source:** UX Trends India
-**Idea:** Add a microphone button to every screen. Farmers prefer speaking 'Add 100kg Chana' over typing.
 **Priority:** Medium
 **Status:** PROPOSED
 
