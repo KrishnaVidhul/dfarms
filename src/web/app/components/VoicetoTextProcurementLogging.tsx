@@ -1,84 +1,69 @@
-jsx
-import React, { useState } from 'react';
-import { Mic, MicOff } from 'lucide-react';
+import React, { useState } from "react";
+import { Mic2 } from 'lucide-react';
+import { useTheme } from "next-themes";
 
-const VoiceToTextLogging = ({ onTranscription }) => {
-  const [isRecording, setIsRecording] = useState(false);
-  const [transcript, setTranscript] = useState('');
+const VoiceToTextProcurement = () => {
+  const [transcription, setTranscription] = useState('');
+  const { theme } = useTheme();
 
-  const startRecording = async () => {
-    if (typeof window.MediaRecorder === 'undefined') {
-      alert('MediaRecorder API not supported in this browser.');
-      return;
-    }
-
+  const handleVoiceCommand = async (e) => {
+    e.preventDefault();
+    
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
+      
+      let chunks = [];
+      mediaRecorder.ondataavailable = event => chunks.push(event.data);
 
-      let recordedChunks = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) recordedChunks.push(event.data);
-      };
-
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(recordedChunks, { type: 'audio/wav' });
+      mediaRecorder.onstop = async () => {
+        const blob = new Blob(chunks, { type: 'audio/wav' });
         const reader = new FileReader();
         reader.onloadend = async () => {
-          const base64data = reader.result.split(',')[1];
-          const response = await fetch('https://api.speechtotextservice.com/transcribe', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ audio: base64data })
-          });
-          const data = await response.json();
-          onTranscription(data.transcript);
+          try {
+            const response = await fetch('https://api.speech-to-text.com/endpoint', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ audioData: reader.result.split(',')[1] })
+            });
+            const result = await response.json();
+            setTranscription(result.text);
+          } catch (error) {
+            console.error('Error transcribing:', error);
+          }
         };
-        reader.readAsDataURL(audioBlob);
+        reader.readAsDataURL(blob);
       };
 
       mediaRecorder.start();
-      setIsRecording(true);
-    } catch (err) {
-      console.error('Error accessing microphone:', err);
-    }
-  };
 
-  const stopRecording = () => {
-    if (isRecording) {
-      mediaRecorder.stop();
-      setIsRecording(false);
+      setTimeout(() => {
+        mediaRecorder.stop();
+      }, 5000); // Stop after 5 seconds
+    } catch (err) {
+      console.error("The following gUM error occurred: " + err);
     }
-  };
+  }
 
   return (
-    <div className="bg-gray-800 p-4 rounded-lg shadow-md flex items-center justify-between">
+    <div className={`bg-${theme === 'dark' ? 'gray-900' : 'white'} text-${theme === 'dark' ? 'white' : 'black'} rounded-lg shadow-md p-6 flex items-center justify-between`}>
       <button
-        onClick={isRecording ? stopRecording : startRecording}
-        className="flex items-center px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded"
+        onClick={handleVoiceCommand}
+        className="bg-${theme === 'dark' ? 'blue-500' : 'blue-200'} hover:bg-${theme === 'dark' ? 'blue-700' : 'blue-300'} text-white font-semibold py-2 px-4 rounded"
       >
-        {isRecording ? (
-          <>
-            <MicOff strokeWidth={2} size={18} className="mr-2" />
-            Stop Recording
-          </>
-        ) : (
-          <>
-            <Mic strokeWidth={2} size={18} className="mr-2" />
-            Start Recording
-          </>
-        )}
+        <Mic2 className="mr-2" />
+        Voice Command
       </button>
-      {transcript && (
-        <div className="max-w-sm text-white">
-          Transcription: {transcript}
+      {transcription && (
+        <div className="flex flex-col">
+          <span className="text-gray-500">Transcription:</span>
+          <p>{transcription}</p>
         </div>
       )}
     </div>
   );
-};
+}
 
-export default VoiceToTextLogging;
+export default VoiceToTextProcurement;
