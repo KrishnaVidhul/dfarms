@@ -1,52 +1,61 @@
 // @ts-nocheck
-import { Moon, Sun } from 'lucide-react';
+'use client';
+
 import { useState } from 'react';
-import { clsx } from 'clsx';
+import { Activity } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+
+const procurementData = [
+  { name: 'Jan', voiceLogs: 100, textLogs: 50 },
+  { name: 'Feb', voiceLogs: 120, textLogs: 60 },
+  { name: 'Mar', voiceLogs: 140, textLogs: 70 },
+  { name: 'Apr', voiceLogs: 160, textLogs: 80 },
+  { name: 'May', voiceLogs: 180, textLogs: 90 },
+];
 
 export default function Page() {
-  'use client';
-  const [isDarkMode, setIsDarkMode] = useState(true);
-  const [voiceLog, setVoiceLog] = useState('');
-  const [logs, setLogs] = useState([
-    { id: 1, log: 'Procured 1000 kg of wheat' },
-    { id: 2, log: 'Ordered 500 liters of fertilizer' },
+  const [voiceTextLogs, setVoiceTextLogs] = useState([
+    { id: 1, voiceLog: 'Procurement Request', textLog: 'Order placed for seeds' },
+    { id: 2, voiceLog: 'Payment Confirmation', textLog: 'Payment made for equipment' },
+    { id: 3, voiceLog: 'Delivery Update', textLog: 'Shipment arrived at warehouse' },
   ]);
 
   const handleVoiceLog = () => {
-    const voiceLogText = 'Procured 2000 kg of maize';
-    setVoiceLog(voiceLogText);
-    setLogs([...logs, { id: logs.length + 1, log: voiceLogText }]);
+    setVoiceTextLogs([
+      ...voiceTextLogs,
+      { id: voiceTextLogs.length + 1, voiceLog: 'New Voice Log', textLog: 'New Text Log' },
+    ]);
   };
 
   return (
-    <div className={clsx('flex flex-col p-4', isDarkMode ? 'bg-gray-800' : 'bg-white')}>
-      <h1 className={clsx('text-2xl font-bold', isDarkMode ? 'text-white' : 'text-gray-800')}>Voice-to-Text Procurement Logging</h1>
-      <button
-        className={clsx(
-          'ml-auto flex items-center justify-center gap-2 rounded-md p-2',
-          isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800',
-        )}
-        onClick={() => setIsDarkMode(!isDarkMode)}
-      >
-        {isDarkMode ? <Moon size={18} /> : <Sun size={18} />}
-        {isDarkMode ? 'Light Mode' : 'Dark Mode'}
-      </button>
-      <div className={clsx('mt-4 flex flex-col gap-4', isDarkMode ? 'text-white' : 'text-gray-800')}>
-        <p>Press the button to simulate voice-to-text logging</p>
+    <div className="p-4 bg-gray-800 rounded-lg shadow-md">
+      <h2 className="text-lg font-bold text-gray-200 mb-4">Voice-to-Text Procurement Logging</h2>
+      <div className="flex justify-between mb-4">
         <button
-          className={clsx(
-            'rounded-md p-2',
-            isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800',
-          )}
+          className="bg-blue-600 hover:bg-blue-700 text-gray-200 py-2 px-4 rounded-lg"
           onClick={handleVoiceLog}
         >
-          Simulate Voice Log
+          <Activity size={20} className="mr-2" /> Record Voice Log
         </button>
-        <h2 className={clsx('text-xl font-bold', isDarkMode ? 'text-white' : 'text-gray-800')}>Recent Logs</h2>
+        <button className="bg-gray-600 hover:bg-gray-700 text-gray-200 py-2 px-4 rounded-lg">
+          View All Logs
+        </button>
+      </div>
+      <LineChart width={500} height={300} data={procurementData}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="name" />
+        <YAxis />
+        <Tooltip />
+        <Line type="monotone" dataKey="voiceLogs" stroke="#8884d8" />
+        <Line type="monotone" dataKey="textLogs" stroke="#82ca9d" />
+      </LineChart>
+      <div className="mt-4">
+        <h3 className="text-lg font-bold text-gray-200 mb-2">Recent Voice-to-Text Logs</h3>
         <ul>
-          {logs.map((log) => (
-            <li key={log.id} className={clsx('py-2', isDarkMode ? 'text-white' : 'text-gray-800')}>
-              {log.log}
+          {voiceTextLogs.map((log) => (
+            <li key={log.id} className="py-2 border-b border-gray-700">
+              <span className="text-gray-200">{log.voiceLog}</span>
+              <span className="text-gray-500 ml-2">{log.textLog}</span>
             </li>
           ))}
         </ul>
