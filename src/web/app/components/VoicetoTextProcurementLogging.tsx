@@ -1,84 +1,70 @@
 jsx
 import React, { useState } from 'react';
-import { Mic2 } from 'lucide-react';
-import { useTheme } from 'next-themes';
+import { Mic, Volume2 } from 'lucide-react';
 
-const VoiceToTextProcurementLogging = () => {
+const VoiceToTextLogging = ({ onTranscription }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
-  const { theme } = useTheme();
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+  const startRecording = () => {
+    if (window.MediaRecorder) {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          const mediaRecorder = new MediaRecorder(stream);
+          let audioChunks = [];
 
-      let audioChunks = [];
+          mediaRecorder.ondataavailable = event => {
+            audioChunks.push(event.data);
+          };
 
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunks.push(event.data);
-      };
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            const formData = new FormData();
+            formData.append('file', audioBlob);
 
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-        const formData = new FormData();
-        formData.append('file', audioBlob);
+            fetch('/api/voice-to-text', {
+              method: 'POST',
+              body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+              onTranscription(data.transcript);
+              setTranscript('');
+            });
+          };
 
-        fetch('/api/transcribe', {
-          method: 'POST',
-          body: formData,
+          mediaRecorder.start();
+          setIsRecording(true);
         })
-        .then(response => response.json())
-        .then(data => {
-          setTranscript(data.transcript);
-        })
-        .catch(error => console.error('Error transcribing:', error));
-
-        audioChunks = [];
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (err) {
-      console.error('Microphone access denied: ', err);
+        .catch(error => {
+          console.error('Error accessing microphone:', error);
+        });
+    } else {
+      console.error('MediaRecorder is not supported in this browser');
     }
   };
 
   const stopRecording = () => {
-    if (audioRecorder) {
-      audioRecorder.stop();
+    if (isRecording) {
+      mediaRecorder.stop();
       setIsRecording(false);
     }
   };
 
   return (
-    <div className={`bg-${theme === 'dark' ? 'gray-900' : 'white'} text-${
-      theme === 'dark' ? 'gray-200' : 'black'
-    } rounded-lg shadow-md p-4 flex items-center justify-between`}>
-      <button
-        onClick={isRecording ? stopRecording : startRecording}
-        className="flex items-center gap-2"
-      >
-        {isRecording ? (
-          <>
-            <Mic2 className="text-red-500" />
-            Stop Recording
-          </>
-        ) : (
-          <>
-            <Mic2 />
-            Start Recording
-          </>
-        )}
-      </button>
-      {transcript && (
-        <div className="flex flex-col max-w-md">
-          <p className="font-semibold">Transcript:</p>
-          <p>{transcript}</p>
-        </div>
+    <div className="bg-gray-800 p-4 rounded-lg shadow-md flex justify-center items-center space-x-2">
+      {isRecording ? (
+        <button onClick={stopRecording} className="p-2 text-white bg-red-500 rounded hover:bg-red-600 focus:outline-none focus:ring focus:ring-red-300 transition duration-150 ease-in-out">
+          Stop
+        </button>
+      ) : (
+        <button onClick={startRecording} className="p-2 text-white bg-green-500 rounded hover:bg-green-600 focus:outline-none focus:ring focus:ring-green-300 transition duration-150 ease-in-out">
+          Start
+        </button>
       )}
+      <Mic size={24} className="text-gray-400" />
     </div>
   );
 };
 
-export default VoiceToTextProcurementLogging;
+export default VoiceToTextLogging;
