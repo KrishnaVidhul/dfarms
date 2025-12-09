@@ -1,73 +1,73 @@
 jsx
-import React, { useState, useEffect } from 'react';
-import { HiOutlineMicrophone, HiOutlineStopCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Mic, FilePlus2 } from 'lucide-react';
 
-const VoiceToTextProcurement = () => {
+const VoiceToTextProcurementLogging = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
-  let recognition;
 
-  useEffect(() => {
-    if ('webkitSpeechRecognition' in window) {
-      recognition = new (window as any).webkitSpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = 'en-US';
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
 
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        setTranscript(transcript);
+      let audioChunks = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunks.push(event.data);
       };
 
-      recognition.onerror = (error) => {
-        console.error('Speech Recognition error:', error);
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+        const formData = new FormData();
+        formData.append('audio', audioBlob);
+
+        // Simulate uploading to server
+        fetch('/api/voice-to-text', {
+          method: 'POST',
+          body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+          setTranscript(data.transcript);
+        });
       };
 
-      recognition.onend = () => {
-        setIsRecording(false);
-      };
-    } else {
-      console.error('Web Speech API not supported');
-    }
-  }, []);
-
-  const startRecording = () => {
-    if (recognition && !isRecording) {
+      mediaRecorder.start();
       setIsRecording(true);
-      recognition.start();
+    } catch (err) {
+      console.error('Failed to record audio:', err);
     }
   };
 
   const stopRecording = () => {
-    if (recognition && isRecording) {
+    if (isRecording) {
+      // Assuming the media recorder is defined and started
+      mediaRecorder.stop();
       setIsRecording(false);
-      recognition.stop();
     }
   };
 
   return (
-    <div className="p-4 bg-gray-900 rounded-lg shadow-lg flex items-center justify-between">
+    <div className="bg-gray-800 p-6 rounded-lg shadow-md w-full max-w-2xl mx-auto">
+      <h2 className="text-xl font-bold text-white mb-4">Voice-to-Text Procurement Logging</h2>
       <button
         onClick={isRecording ? stopRecording : startRecording}
-        className="bg-blue-500 text-white px-4 py-2 rounded-full flex items-center space-x-2"
+        className={`bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg flex items-center justify-center ${
+          isRecording && 'bg-red-500 hover:bg-red-600'
+        }`}
       >
-        {isRecording ? (
-          <>
-            <HiOutlineStopCircle size={16} />
-            Stop Recording
-          </>
-        ) : (
-          <>
-            <HiOutlineMicrophone size={16} />
-            Start Recording
-          </>
-        )}
+        {isRecording ? <Mic className="mr-2" /> : <FilePlus2 className="mr-2" />}
+        {isRecording ? 'Stop Recording' : 'Start Recording'}
       </button>
-      <div className="flex-1 text-white pl-4">
-        {transcript}
-      </div>
+      {transcript && (
+        <div className="bg-gray-700 p-4 mt-4 rounded-lg shadow-md">
+          <p className="text-white text-base font-semibold">Transcript:</p>
+          <pre className="text-gray-200 whitespace-pre-wrap">{transcript}</pre>
+        </div>
+      )}
     </div>
   );
 };
 
-export default VoiceToTextProcurement;
+export default VoiceToTextProcurementLogging;
