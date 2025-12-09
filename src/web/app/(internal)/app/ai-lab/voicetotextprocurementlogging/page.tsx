@@ -1,55 +1,36 @@
+
 // @ts-nocheck
 
-import React, { useState } from 'react';
-import { Activity, Mic } from 'lucide-react';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Activity } from 'lucide-react';
 import clsx from 'clsx';
+import tailwindMerge from 'tailwind-merge';
 
-export default function VoiceToTextProcurementLogging() {
-  const [transcript, setTranscript] = useState('');
+const VoiceToTextProcurementLogging = () => {
+  const [transcription, setTranscription] = useState('');
 
-  const handleVoiceInput = async (event) => {
-    event.preventDefault();
-    if ('webkitSpeechRecognition' in window) {
-      const recognition = new webkitSpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = true;
-
-      recognition.onresult = (event) => {
-        const transcriptBuffer = Array.from(event.results)
-          .map((result) => result[0].transcript)
-          .join('');
-        setTranscript(transcriptBuffer);
-      };
-
-      recognition.onerror = (event) => {
-        console.error('Speech recognition error:', event.error);
-      };
-
-      recognition.onend = () => {
-        // You can add your logic here to send the transcript for logging
-      };
-
-      recognition.start();
-    } else {
-      alert('Sorry, your browser does not support speech recognition.');
-    }
-  };
+  useEffect(() => {
+    // Mock data simulation
+    const mockTranscription = "Vendor XYZ delivered 100 tons of organic cotton on time.";
+    setTranscription(mockTranscription);
+  }, []);
 
   return (
-    <div className="p-4 bg-gray-900 text-white rounded-lg shadow-md">
-      <h2 className="text-xl font-bold mb-4">Voice-to-Text Procurement Logging</h2>
-      <button
-        onClick={handleVoiceInput}
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-      >
-        Start Recording
-      </button>
-      {transcript && (
-        <div className="mt-4 bg-gray-800 p-3 rounded">
-          <p className="font-semibold">Transcript:</p>
-          <pre>{transcript}</pre>
-        </div>
-      )}
+    <div className={tailwindMerge(
+      'bg-[#1e293b] text-white p-4 rounded-lg shadow-md',
+      'dark:bg-[#333] dark:text-gray-200'
+    )}>
+      <div className="flex items-center gap-2 mb-2">
+        <Activity size={24} />
+        <h1 className="text-lg font-semibold">Voice-to-Text Procurement Logging</h1>
+      </div>
+      <div className="border border-gray-700 p-3 rounded-md">
+        {transcription}
+      </div>
     </div>
   );
-}
+};
+
+export default VoiceToTextProcurementLogging;
