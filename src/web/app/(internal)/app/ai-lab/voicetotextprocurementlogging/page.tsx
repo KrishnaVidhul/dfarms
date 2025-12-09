@@ -1,41 +1,45 @@
 // @ts-nocheck
 
-"use client";
+import { useClient } from 'next'
+import { Activity, Box, Circle, User } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-import React, { useState, useEffect } from "react";
-import { Activity, Box, Circle, User } from "lucide-react";
-import clsx from "clsx";
-import tailwindMerge from "tailwind-merge";
+interface ProcurementLog {
+  id: number;
+  timestamp: string;
+  action: string;
+  user: string;
+}
 
-const VoiceToTextProcurementLogging = () => {
-  const [logEntries, setLogEntries] = useState([
-    { id: 1, timestamp: new Date().toISOString(), user: "John Doe", action: "Voice-to-text transcription completed" },
-    { id: 2, timestamp: new Date().substr(0, 10), user: "Jane Smith", action: "New procurement order received" },
+const ProcurementLogs: React.FC = () => {
+  const [logs, setLogs] = useState<ProcurementLog[]>([
+    { id: 1, timestamp: '2023-04-15T10:00:00Z', action: 'Created Purchase Order', user: 'John Doe' },
+    { id: 2, timestamp: '2023-04-15T10:30:00Z', action: 'Updated Supplier Details', user: 'Jane Smith' },
+    { id: 3, timestamp: '2023-04-15T11:00:00Z', action: 'Approved Payment Request', user: 'Alice Johnson' }
   ]);
 
   useEffect(() => {
-    // Mock data fetching
-    const mockData = [
-      { id: 3, timestamp: new Date().toISOString(), user: "Mike Johnson", action: "Voice-to-text transcription started" },
-      { id: 4, timestamp: new Date().substr(0, 10), user: "Emily White", action: "Procurement order processed" },
-    ];
-    setLogEntries([...logEntries, ...mockData]);
+    // Simulate fetching data from a database
+    fetch('/api/procurement-logs')
+      .then(response => response.json())
+      .then(data => setLogs(data))
+      .catch(error => console.error('Error fetching procurement logs:', error));
   }, []);
 
   return (
-    <div className={tailwindMerge("bg-dark-900 text-white p-6 rounded-lg shadow-lg",)}>
-      <h2 className="text-xl font-semibold mb-4">Voice-to-Text Procurement Logging</h2>
-      <ul className="space-y-2">
-        {logEntries.map((entry) => (
-          <li
-            key={entry.id}
-            className={tailwindMerge("bg-dark-700 p-3 rounded-lg flex items-center justify-between",)}
-          >
+    <div className="p-4">
+      <h2 className="text-xl font-bold mb-4">Procurement Logs</h2>
+      <ul className="divide-y divide-gray-700">
+        {logs.map(log => (
+          <li key={log.id} className="py-3 flex justify-between items-center">
             <div>
-              <p className="text-sm font-semibold">{entry.user}</p>
-              <p className="text-xs text-gray-400">{entry.action}</p>
+              <p className="text-sm text-gray-500">{new Date(log.timestamp).toLocaleString()}</p>
+              <p className="text-base font-medium">{log.action}</p>
             </div>
-            <span className={tailwindMerge("text-gray-500")}>{entry.timestamp}</span>
+            <div className="flex items-center space-x-2 opacity-75">
+              <User />
+              <span>{log.user}</span>
+            </div>
           </li>
         ))}
       </ul>
@@ -43,4 +47,4 @@ const VoiceToTextProcurementLogging = () => {
   );
 };
 
-export default VoiceToTextProcurementLogging;
+export default ProcurementLogs;
