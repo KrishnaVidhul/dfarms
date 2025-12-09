@@ -1,43 +1,91 @@
-import React, { useState } from 'react';
-import { Mic2 } from 'lucide-react';
+jsx
+import React, { useState, useEffect } from 'react';
+import { Mic, CheckCircle2 } from 'lucide-react';
 
-const VoiceToTextLogging = ({ onTranscription }) => {
+const VoiceToTextProcurementLogging = () => {
   const [isRecording, setIsRecording] = useState(false);
-  const mediaRecorder = new MediaRecorder(navigator.mediaDevices.getUserMedia({ audio: true }));
-  let recordedChunks = [];
+  const [text, setText] = useState('');
+
+  useEffect(() => {
+    let recognition;
+
+    if ('webkitSpeechRecognition' in window) {
+      recognition = new webkitSpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript.trim();
+        setText(transcript);
+      };
+      recognition.onerror = (error) => {
+        console.error('Error occurred during speech recognition:', error);
+      };
+    } else if ('SpeechRecognition' in window) {
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript.trim();
+        setText(transcript);
+      };
+      recognition.onerror = (error) => {
+        console.error('Error occurred during speech recognition:', error);
+      };
+    }
+
+    if (recognition) {
+      recognition.onend = () => setIsRecording(false);
+    }
+
+    return () => {
+      if (recognition) {
+        recognition.stop();
+      }
+    };
+  }, []);
 
   const startRecording = () => {
-    setIsRecording(true);
-    mediaRecorder.start();
-    recordedChunks = [];
-    mediaRecorder.ondataavailable = (event) => {
-      if (event.data.size > 0) recordedChunks.push(event.data);
-    };
-    mediaRecorder.onstop = () => {
-      const audioBlob = new Blob(recordedChunks, { type: 'audio/wav' });
-      fetch('https://api.speechtotextservice.com/transcribe', {
-        method: 'POST',
-        body: audioBlob,
-        headers: {
-          'Content-Type': 'audio/wav',
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => onTranscription(data.transcript))
-        .catch((error) => console.error('Error transcribing audio:', error));
-    };
+    if (!isRecording && 'webkitSpeechRecognition' in window) {
+      setIsRecording(true);
+      recognition.start();
+    } else if (!isRecording && 'SpeechRecognition' in window) {
+      setIsRecording(true);
+      recognition.start();
+    }
+  };
+
+  const stopRecording = () => {
+    setIsRecording(false);
+    recognition.stop();
   };
 
   return (
-    <button
-      onClick={() => isRecording ? mediaRecorder.stop() : startRecording()}
-      className="bg-blue-500 text-white py-2 px-4 rounded-full shadow-lg hover:bg-blue-600 focus:outline-none transition duration-300"
-      aria-label={isRecording ? 'Stop Recording' : 'Start Recording'}
-    >
-      {isRecording ? <Mic2 className="w-5 h-5 mr-2" /> : <Mic2 className="w-5 h-5 mr-2" />}
-      {isRecording ? 'Stop Recording' : 'Start Recording'}
-    </button>
+    <div className="bg-gray-800 text-white p-6 rounded-lg shadow-md flex items-center justify-between">
+      <div>
+        {text ? (
+          <p className="font-semibold">{text}</p>
+        ) : (
+          <p className="opacity-75">Start speaking...</p>
+        )}
+      </div>
+      <button
+        onClick={isRecording ? stopRecording : startRecording}
+        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded inline-flex items-center"
+      >
+        {isRecording ? (
+          <>
+            <Mic className="mr-2" />
+            Stop Recording
+          </>
+        ) : (
+          <>
+            <Mic className="mr-2" />
+            Start Recording
+          </>
+        )}
+      </button>
+    </div>
   );
 };
 
-export default VoiceToTextLogging;
+export default VoiceToTextProcurementLogging;
