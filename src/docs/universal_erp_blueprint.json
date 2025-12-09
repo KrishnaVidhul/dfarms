@@ -1,0 +1,78 @@
+{
+    "modules": {
+        "hr_management": {
+            "title": "Human Resources & Payroll",
+            "required_tables": [
+                "employees",
+                "timesheets",
+                "payroll_runs",
+                "contracts"
+            ],
+            "features": [
+                {
+                    "name": "Employee Self-Service Portal",
+                    "priority": "High"
+                },
+                {
+                    "name": "Automated Payroll Processing",
+                    "priority": "High"
+                }
+            ]
+        },
+        "logistics": {
+            "title": "Fleet & Logistics",
+            "required_tables": [
+                "vehicles",
+                "drivers",
+                "routes",
+                "deliveries"
+            ],
+            "features": [
+                {
+                    "name": "Real-time Vehicle Tracking",
+                    "priority": "High"
+                },
+                {
+                    "name": "Driver Mobile App (PWA)",
+                    "priority": "Medium"
+                }
+            ]
+        },
+        "document_management": {
+            "title": "Document Intelligence",
+            "required_tables": [
+                "documents",
+                "ocr_extractions",
+                "tags"
+            ],
+            "features": [
+                {
+                    "name": "Automated Invoice OCR",
+                    "priority": "Medium"
+                },
+                {
+                    "name": "Semantic Document Search",
+                    "priority": "Low"
+                }
+            ]
+        },
+        "security_audit": {
+            "title": "Security & Compliance",
+            "required_tables": [
+                "audit_logs",
+                "api_keys",
+                "mfa_tokens"
+            ],
+            "features": [
+                {
+                    "name": "System-wide Audit Trail",
+                    "priority": "Critical"
+                },
+                {
+                    "name": "Two-Factor Authentication Enforcer",
+                    "priority": "High"
+                }
+            ]
+        }
+    }
+}

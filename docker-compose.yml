@@ -1,0 +1,74 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: dfarms_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - dfarms_net
+
+  web:
+    image: node:20-alpine
+    container_name: dfarms_web
+    working_dir: /app
+    volumes:
+      - ./src/web:/app
+      - ./src/commands.txt:/app/commands.txt
+      - ./ipc:/app/ipc
+    command: sh -c "if [ -f package.json ]; then npm install && npm run dev; else echo 'Waiting for Next.js init...'; tail -f /dev/null; fi"
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      NODE_ENV: ${NODE_ENV}
+    depends_on:
+      - db
+    networks:
+      - dfarms_net
+
+  nginx:
+    image: nginx:alpine
+    container_name: dfarms_nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8080:80"
+    depends_on:
+      - web
+    networks:
+      - dfarms_net
+
+  agent_runtime:
+    build:
+      context: ./src/agent_runtime
+    container_name: dfarms_agent
+    working_dir: /app
+    volumes:
+      - .:/app
+      - ./ipc:/app/ipc
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: python -u src/agent_runtime/super_agent.py
+    env_file:
+      - ./src/agent_runtime/.env
+    environment:
+      OPENAI_API_BASE: "http://host.docker.internal:11434/v1"
+      OPENAI_API_KEY: "ollama"
+      OLLAMA_API_BASE: "http://host.docker.internal:11434"
+      OLLAMA_HOST: "http://host.docker.internal:11434"
+      DATABASE_URL: ${DATABASE_URL}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - db
+    networks:
+      - dfarms_net
+
+networks:
+  dfarms_net:
+    driver: bridge

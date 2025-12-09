@@ -1,0 +1,66 @@
+CMD: Add 100kg of Grade A Masoor Dal
+ERR: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-local***lama. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}}
+---
+CMD: Add 100kg of Grade A Masoor Dal
+ERR: Model llama3 not found: 404 page not found
+---
+CMD: Add 100kg of Grade A Masoor Dal
+ERR: Model llama3 not found: 404 page not found
+---
+CMD: Add 100kg of Grade A Masoor Dal
+ERR: Model llama3 not found: 404 page not found
+---
+CMD: Add 100kg of Grade A Masoor Dal
+ERR: Model llama3 not found: 404 page not found
+---
+CMD: Add 100kg of Grade A Masoor Dal
+ERR: Model llama3 not found: 404 page not found
+---
+CMD: Add 100kg of Grade A Masoor Dal
+ERR: Model llama3 not found: 404 page not found
+---
+CMD: Add 100kg of Grade A Masoor Dal
+ERR: Model llama3:latest not found: 404 page not found
+---
+CMD: Add 200kg of Grade B Chana
+ERR: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-local***lama. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}}
+---
+CMD: Add 500kg of Grade A Rice
+ERR: Error code: 401 - {'error': {'message': 'Incorrect API key provided: ollama. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+---
+CMD: Add 300kg of Grade A Urad Dal
+ERR: Error code: 401 - {'error': {'message': 'Incorrect API key provided: ollama. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+---
+CMD: Add 50kg of Grade A Toor Dal
+ERR: Model llama3:latest not found: 404 page not found
+---
+CMD: Add 50kg of Grade A Toor Dal
+ERR: Model llama3:latest not found: 404 page not found
+---
+CMD: Add 75kg of Grade B Masoor Dal
+ERR: Error code: 401 - {'error': {'message': 'Incorrect API key provided: ollama. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+---
+CMD: Add 100kg of Grade A Masoor Dal
+ERR: Error code: 401 - {'error': {'message': 'Incorrect API key provided: ollama. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+---
+CMD: Add 200kg of Grade A Masoor Dal
+RES: Successfully added 200.0kg of A Grade A Masoor Dal with Batch ID BATCH-AUTO-4354A2A8.
+---
+CMD: Find price of Chana in Akola
+RES: Stock not available, waiting for better prices.
+---
+CMD: Tur dal price in all mandis in india
+RES: ```
+Stock added
+Recorded market prices for Tur dal in all mandis in India: Tur Dal|All Mandis in India|₹97.15/kg|No recommendation
+```
+---
+CMD: tur dal price in all mandis in india, specify price in each mandi
+RES: ```
+Thought: 
+Action: Record Market Price
+Action Input: {"tool_input": "Tur Dal|All Mandis in India|₹10361.25 per quintal|Recommendation"}
+---
+CMD: Process 100kg from batch BATCH-2025-001 into Split Chana Dal
+RES: Processed 100.0kg of Chana (BATCH-2025-001) into 85.0kg of Split Chana Dal (BATCHPROC-D2723B38).
+---

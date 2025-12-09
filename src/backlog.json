@@ -1,0 +1,10 @@
+[
+  {
+    "id": "TICKET-EA87",
+    "title": "Prevent Negative Stock",
+    "description": "Selling 10000kg of 'Chana' resulted in unknown simulation action.",
+    "priority": "High",
+    "status": "Open",
+    "logged_by": "QA_AUDITOR"
+  }
+]
