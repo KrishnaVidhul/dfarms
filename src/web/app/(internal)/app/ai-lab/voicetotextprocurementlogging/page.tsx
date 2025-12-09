@@ -1,89 +1,44 @@
-
 // @ts-nocheck
 
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Activity } from 'lucide-react';
-import { useTheme } from 'next-themes';
-import clsx from 'clsx';
-import tailwindMerge from 'tailwind-merge';
+import React, { useState, useEffect } from "react";
+import { Activity, Box, Circle, User } from "lucide-react";
+import clsx from "clsx";
+import tailwindMerge from "tailwind-merge";
 
 const VoiceToTextProcurementLogging = () => {
-  const [text, setText] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
-  const { theme } = useTheme();
+  const [logEntries, setLogEntries] = useState([
+    { id: 1, timestamp: new Date().toISOString(), user: "John Doe", action: "Voice-to-text transcription completed" },
+    { id: 2, timestamp: new Date().substr(0, 10), user: "Jane Smith", action: "New procurement order received" },
+  ]);
 
-  const startRecording = async () => {
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const mediaRecorder = new MediaRecorder(stream);
-
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            const audioUrl = URL.createObjectURL(event.data);
-            const recognition = new webkitSpeechRecognition();
-            recognition.continuous = false;
-            recognition.interimResults = false;
-            recognition.lang = 'en-US';
-
-            recognition.onresult = (e) => {
-              setText(e.results[0][0].transcript);
-            };
-
-            recognition.onerror = (err) => {
-              console.error('Error:', err);
-            };
-
-            recognition.start();
-          }
-        };
-
-        mediaRecorder.onstop = () => {
-          stream.getTracks().forEach(track => track.stop());
-        };
-
-        mediaRecorder.start();
-        setIsRecording(true);
-      } catch (error) {
-        console.error('Access to microphone denied.');
-      }
-    } else {
-      console.error('Browser does not support getUserMedia');
-    }
-  };
-
-  const stopRecording = () => {
-    if (isRecording) {
-      // Assuming the mediaRecorder is still available
-      setIsRecording(false);
-    }
-  };
+  useEffect(() => {
+    // Mock data fetching
+    const mockData = [
+      { id: 3, timestamp: new Date().toISOString(), user: "Mike Johnson", action: "Voice-to-text transcription started" },
+      { id: 4, timestamp: new Date().substr(0, 10), user: "Emily White", action: "Procurement order processed" },
+    ];
+    setLogEntries([...logEntries, ...mockData]);
+  }, []);
 
   return (
-    <div className={tailwindMerge(
-      'p-6 rounded-lg shadow-lg bg-white dark:bg-gray-800',
-      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-    )}>
-      <h2 className="mb-4 text-xl font-semibold">Voice-to-Text Procurement Logging</h2>
-      <div>
-        <button
-          onClick={isRecording ? stopRecording : startRecording}
-          className={tailwindMerge(
-            'px-4 py-2 rounded-lg text-sm font-medium',
-            isRecording ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'
-          )}
-        >
-          {isRecording ? <Activity /> : 'Start Recording'}
-        </button>
-      </div>
-      {text && (
-        <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
-          <p>Transcript:</p>
-          <pre>{text}</pre>
-        </div>
-      )}
+    <div className={tailwindMerge("bg-dark-900 text-white p-6 rounded-lg shadow-lg",)}>
+      <h2 className="text-xl font-semibold mb-4">Voice-to-Text Procurement Logging</h2>
+      <ul className="space-y-2">
+        {logEntries.map((entry) => (
+          <li
+            key={entry.id}
+            className={tailwindMerge("bg-dark-700 p-3 rounded-lg flex items-center justify-between",)}
+          >
+            <div>
+              <p className="text-sm font-semibold">{entry.user}</p>
+              <p className="text-xs text-gray-400">{entry.action}</p>
+            </div>
+            <span className={tailwindMerge("text-gray-500")}>{entry.timestamp}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };
