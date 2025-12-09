@@ -1,54 +1,57 @@
 // @ts-nocheck
-import { Activity } from 'lucide-react';
 import { useState } from 'react';
-import clsx from 'clsx';
+import { Activity, Circle } from 'lucide-react';
+import { LineChart, Line } from 'recharts';
 
 'use client';
 
-const procurementLogs = [
-  { id: 1, date: '2024-09-01', description: 'Procured seeds for wheat crop' },
-  { id: 2, date: '2024-09-05', description: 'Procured fertilizers for corn crop' },
-  { id: 3, date: '2024-09-10', description: 'Procured pesticides for soybean crop' },
+const data = [
+  { name: 'Jan', uv: 4000, pv: 2400, amt: 2400 },
+  { name: 'Feb', uv: 3000, pv: 1398, amt: 2210 },
+  { name: 'Mar', uv: 2000, pv: 9800, amt: 2290 },
+  { name: 'Apr', uv: 2780, pv: 3908, amt: 2000 },
+  { name: 'May', uv: 1890, pv: 4800, amt: 2181 },
+  { name: 'Jun', uv: 2390, pv: 3800, amt: 2500 },
+  { name: 'Jul', uv: 3490, pv: 4300, amt: 2100 },
 ];
 
 export default function Page() {
-  const [newLog, setNewLog] = useState('');
-  const [logs, setLogs] = useState(procurementLogs);
+  const [voiceLog, setVoiceLog] = useState([
+    { id: 1, log: 'Procurement of seeds' },
+    { id: 2, log: 'Order of fertilizers' },
+    { id: 3, log: 'Purchase of farming equipment' },
+  ]);
 
-  const handleAddLog = () => {
-    if (newLog) {
-      setLogs([...logs, { id: logs.length + 1, date: new Date().toISOString().split('T')[0], description: newLog }]);
-      setNewLog('');
-    }
+  const handleVoiceLog = () => {
+    setVoiceLog([...voiceLog, { id: voiceLog.length + 1, log: 'New log' }]);
   };
 
   return (
-    <div className="p-4 bg-gray-800 rounded-md">
-      <h2 className="text-lg font-bold text-gray-200 mb-4">Voice-to-Text Procurement Logging</h2>
-      <div className="flex justify-between items-center mb-4">
-        <Activity size={24} className="text-gray-400" />
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 md:p-8 mb-12 bg-neutral-800 rounded-lg shadow-lg">
+      <h1 className="text-3xl font-bold text-gray-100 mb-4">
+        Voice-to-Text Procurement Logging
+      </h1>
+      <div className="flex justify-between mb-4">
         <button
-          className={clsx(
-            'px-4 py-2 text-gray-200 bg-gray-600 rounded-md hover:bg-gray-700',
-            'transition duration-200 ease-in-out'
-          )}
-          onClick={handleAddLog}
+          onClick={handleVoiceLog}
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
         >
-          Add Log
+          <Circle className="mr-2" size={20} />
+          Add New Log
         </button>
+        <Activity size={24} className="text-gray-500" />
       </div>
-      <input
-        type="text"
-        value={newLog}
-        onChange={(e) => setNewLog(e.target.value)}
-        placeholder="Enter new log description"
-        className="w-full p-2 text-gray-200 bg-gray-700 rounded-md mb-4"
-      />
+      <div className="mb-12">
+        <LineChart width={600} height={300} data={data}>
+          <Line type="monotone" dataKey="uv" stroke="#8884d8" />
+          <Line type="monotone" dataKey="pv" stroke="#82ca9d" />
+        </LineChart>
+      </div>
+      <h2 className="text-2xl font-bold text-gray-100 mb-4">Voice Logs</h2>
       <ul>
-        {logs.map((log) => (
-          <li key={log.id} className="py-2 border-b border-gray-600">
-            <span className="text-gray-200">{log.date}</span>
-            <span className="text-gray-400 ml-2">{log.description}</span>
+        {voiceLog.map((log) => (
+          <li key={log.id} className="bg-neutral-700 p-4 mb-4 rounded">
+            <p>{log.log}</p>
           </li>
         ))}
       </ul>
