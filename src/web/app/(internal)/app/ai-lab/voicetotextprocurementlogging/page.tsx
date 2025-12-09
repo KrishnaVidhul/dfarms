@@ -1,83 +1,55 @@
 // @ts-nocheck
-'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Activity, Mic } from 'lucide-react';
 import clsx from 'clsx';
-import tailwindMerge from 'tailwind-merge';
 
-const VoiceToTextProcurement = () => {
+export default function VoiceToTextProcurementLogging() {
   const [transcript, setTranscript] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
 
-  useEffect(() => {
-    let recognition;
-
+  const handleVoiceInput = async (event) => {
+    event.preventDefault();
     if ('webkitSpeechRecognition' in window) {
-      recognition = new webkitSpeechRecognition();
+      const recognition = new webkitSpeechRecognition();
       recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = 'en-US';
+      recognition.interimResults = true;
 
       recognition.onresult = (event) => {
-        setTranscript(event.results[0][0].transcript);
+        const transcriptBuffer = Array.from(event.results)
+          .map((result) => result[0].transcript)
+          .join('');
+        setTranscript(transcriptBuffer);
       };
 
       recognition.onerror = (event) => {
-        console.error('Speech Recognition Error:', event.error);
+        console.error('Speech recognition error:', event.error);
       };
-    }
 
-    return () => {
-      if (recognition) {
-        recognition.onend = null;
-        recognition.onerror = null;
-      }
-    };
-  }, []);
+      recognition.onend = () => {
+        // You can add your logic here to send the transcript for logging
+      };
 
-  const startRecording = () => {
-    if (!isRecording && 'webkitSpeechRecognition' in window) {
-      const recognition = new webkitSpeechRecognition();
       recognition.start();
-      setIsRecording(true);
-      recognition.onresult = (event) => {
-        setTranscript(event.results[0][0].transcript);
-        recognition.stop();
-        setIsRecording(false);
-      };
+    } else {
+      alert('Sorry, your browser does not support speech recognition.');
     }
   };
 
   return (
-    <div
-      className={tailwindMerge(
-        'bg-gray-900 text-white p-4 rounded-lg shadow-md',
-        isRecording && 'border border-green-500'
+    <div className="p-4 bg-gray-900 text-white rounded-lg shadow-md">
+      <h2 className="text-xl font-bold mb-4">Voice-to-Text Procurement Logging</h2>
+      <button
+        onClick={handleVoiceInput}
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      >
+        Start Recording
+      </button>
+      {transcript && (
+        <div className="mt-4 bg-gray-800 p-3 rounded">
+          <p className="font-semibold">Transcript:</p>
+          <pre>{transcript}</pre>
+        </div>
       )}
-    >
-      <h2 className="text-xl font-bold mb-3">Voice-to-Text Procurement Logging</h2>
-      <div className="flex items-center">
-        <Mic
-          className={clsx(
-            'w-6 h-6 mr-2',
-            isRecording && 'animate-bounce'
-          )}
-        />
-        <button
-          onClick={startRecording}
-          disabled={!'webkitSpeechRecognition' in window || isRecording}
-          className="bg-blue-500 text-white py-1 px-3 rounded-lg hover:bg-blue-600 transition"
-        >
-          {isRecording ? 'Recording...' : 'Start Recording'}
-        </button>
-      </div>
-      <div className="mt-4">
-        <p className="text-gray-300">Transcript:</p>
-        <pre>{transcript}</pre>
-      </div>
     </div>
   );
-};
-
-export default VoiceToTextProcurement;
+}
