@@ -1,62 +1,76 @@
 jsx
-import { useState, useEffect } from 'react';
-import { VoiceRecognition } from 'speech-recognition-api-wrapper';
-import LucideMic from 'lucide-react';
-import { useTheme } from 'next-themes';
+import React, { useState } from 'react';
+import { Mic2, CheckCircle } from 'lucide-react';
 
-const VoiceToTextProcurement = () => {
-  const [transcript, setTranscript] = useState('');
+const VoiceToTextLogging = () => {
   const [isRecording, setIsRecording] = useState(false);
-  const { theme } = useTheme();
+  const [transcript, setTranscript] = useState('');
 
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.body.classList.add('dark-mode');
-    } else {
-      document.body.classList.remove('dark-mode');
+  const startRecording = async () => {
+    try {
+      if (typeof window.MediaRecorder === 'undefined') {
+        alert('MediaRecorder API not supported in this browser.');
+        return;
+      }
+      
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      
+      let recordedChunks = [];
+      
+      mediaRecorder.ondataavailable = event => {
+        if (event.data.size > 0) {
+          recordedChunks.push(event.data);
+        }
+      };
+      
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(recordedChunks, { type: 'audio/wav' });
+        const reader = new FileReader();
+        
+        reader.onloadend = async () => {
+          const base64String = reader.result.split(',')[1];
+          setTranscript(await fetchVoiceToText(base64String));
+          setIsRecording(false);
+        };
+        
+        reader.readAsDataURL(audioBlob);
+      };
+      
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      alert('Failed to access microphone. Please check your permissions.');
     }
-  }, [theme]);
-
-  const startListening = () => {
-    setIsRecording(true);
-    VoiceRecognition.startListening();
   };
 
-  const stopListening = () => {
-    setIsRecording(false);
-    VoiceRecognition.stopListening();
+  const fetchVoiceToText = async (audioBase64) => {
+    // Simulate API call for voice-to-text conversion
+    return new Promise(resolve => setTimeout(() => resolve('Converted Text'), 2000));
   };
-
-  useEffect(() => {
-    VoiceRecognition.onResult((result) => {
-      setTranscript(result);
-    });
-
-    return () => {
-      VoiceRecognition.abortListening();
-    };
-  }, []);
 
   return (
-    <div className="p-4 bg-gray-800 dark:bg-black rounded-lg shadow-md">
-      <h2 className="text-xl font-bold mb-2">Voice-to-Text Procurement Logging</h2>
-      <div className="flex items-center justify-between border p-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition duration-300">
-        <button
-          onClick={isRecording ? stopListening : startListening}
-          className={`bg-blue-500 text-white font-bold py-2 px-4 rounded-full focus:outline-none ${
-            isRecording ? 'bg-red-500' : ''
-          }`}
-        >
-          {isRecording ? <LucideMic className="mr-2" /> : <LucideMic className="mr-2 transform rotate-180" />}
-          {isRecording ? 'Stop Listening' : 'Start Listening'}
-        </button>
-      </div>
-      <div className="mt-4 p-2 bg-gray-700 dark:bg-gray-600 rounded-lg">
-        <p className="text-white font-semibold">Transcript:</p>
-        <p className="text-gray-300">{transcript}</p>
-      </div>
+    <div className="bg-[#1e1e1e] text-white p-6 rounded-lg shadow-md dark:bg-gray-800 dark:text-white">
+      <h3 className="text-xl font-bold mb-4">Voice-to-Text Procurement Logging</h3>
+      <button
+        onClick={isRecording ? () => {} : startRecording}
+        disabled={false}
+        className={`flex items-center space-x-2 p-2 rounded-lg text-white ${
+          isRecording ? 'bg-red-600' : 'bg-blue-500 hover:bg-blue-600'
+        }`}
+      >
+        {isRecording ? <CheckCircle size={18} /> : <Mic2 size={18} />}
+        {isRecording ? 'Stop Recording' : 'Start Recording'}
+      </button>
+      {transcript && (
+        <div className="mt-4 bg-[#2b2b2b] p-3 rounded-lg shadow-md">
+          <p className="text-sm">Transcript:</p>
+          <pre className="text-white">{transcript}</pre>
+        </div>
+      )}
     </div>
   );
 };
 
-export default VoiceToTextProcurement;
+export default VoiceToTextLogging;
