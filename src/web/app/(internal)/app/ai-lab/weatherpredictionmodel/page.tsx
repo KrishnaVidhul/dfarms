@@ -1,52 +1,41 @@
 // @ts-nocheck
-import { Calendar } from 'lucide-react';
-import { useState } from 'react';
-
 'use client';
 
-export default function WeatherPredictionModel() {
+import { useState } from 'react';
+import { Activity } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+
+export default function Page() {
   const [weatherData, setWeatherData] = useState([
-    {
-      date: '2024-09-01',
-      temperature: 22,
-      precipitation: 0.5,
-    },
-    {
-      date: '2024-09-02',
-      temperature: 25,
-      precipitation: 0.2,
-    },
-    {
-      date: '2024-09-03',
-      temperature: 20,
-      precipitation: 0.8,
-    },
-    {
-      date: '2024-09-04',
-      temperature: 28,
-      precipitation: 0.1,
-    },
-    {
-      date: '2024-09-05',
-      temperature: 24,
-      precipitation: 0.6,
-    },
+    { name: 'Jan', temperature: 20, precipitation: 10 },
+    { name: 'Feb', temperature: 22, precipitation: 12 },
+    { name: 'Mar', temperature: 25, precipitation: 15 },
+    { name: 'Apr', temperature: 28, precipitation: 18 },
+    { name: 'May', temperature: 30, precipitation: 20 },
+    { name: 'Jun', temperature: 32, precipitation: 22 },
+    { name: 'Jul', temperature: 35, precipitation: 25 },
+    { name: 'Aug', temperature: 38, precipitation: 28 },
+    { name: 'Sep', temperature: 35, precipitation: 25 },
+    { name: 'Oct', temperature: 30, precipitation: 20 },
+    { name: 'Nov', temperature: 25, precipitation: 15 },
+    { name: 'Dec', temperature: 20, precipitation: 10 },
   ]);
 
   return (
-    <div className="flex flex-col gap-4 p-4 rounded-lg bg-neutral-800">
-      <div className="flex items-center gap-2">
-        <Calendar size={24} className="text-neutral-400" />
-        <h2 className="text-lg font-bold text-neutral-200">Weather Prediction Model</h2>
+    <div className="flex flex-col h-screen p-4 dark:bg-gray-800">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-bold dark:text-white">Weather Prediction Model</h2>
+        <Activity size={24} className="text-gray-500 dark:text-gray-300" />
       </div>
-      <div className="flex flex-col gap-2">
-        {weatherData.map((data, index) => (
-          <div key={index} className="flex items-center gap-2 p-2 rounded-lg bg-neutral-700">
-            <p className="text-sm text-neutral-400">{data.date}</p>
-            <p className="text-sm text-neutral-200">Temperature: {data.temperature}°C</p>
-            <p className="text-sm text-neutral-200">Precipitation: {data.precipitation} mm</p>
-          </div>
-        ))}
+      <div className="flex-1">
+        <LineChart width={500} height={300} data={weatherData}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip />
+          <Line type="monotone" dataKey="temperature" stroke="#8884d8" activeDot={{ r: 8 }} />
+          <Line type="monotone" dataKey="precipitation" stroke="#82ca9d" />
+        </LineChart>
       </div>
     </div>
   );
