@@ -1,63 +1,73 @@
 jsx
-import React, { useState } from 'react';
-import { Mic2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { HiOutlineMicrophone, HiOutlineStopCircle } from 'lucide-react';
 
-const VoiceToTextLogging = () => {
-  const [isListening, setIsListening] = useState(false);
+const VoiceToTextProcurement = () => {
+  const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
+  let recognition;
 
-  const startListening = async () => {
+  useEffect(() => {
     if ('webkitSpeechRecognition' in window) {
-      const recognition = new webkitSpeechRecognition();
+      recognition = new (window as any).webkitSpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = false;
       recognition.lang = 'en-US';
 
       recognition.onresult = (event) => {
-        setTranscript(event.results[0][0].transcript);
+        const transcript = event.results[0][0].transcript;
+        setTranscript(transcript);
       };
 
       recognition.onerror = (error) => {
-        console.error('Error:', error.message);
+        console.error('Speech Recognition error:', error);
       };
 
       recognition.onend = () => {
-        setIsListening(false);
+        setIsRecording(false);
       };
-
-      recognition.start();
     } else {
-      alert('Sorry, your browser does not support speech recognition.');
+      console.error('Web Speech API not supported');
+    }
+  }, []);
+
+  const startRecording = () => {
+    if (recognition && !isRecording) {
+      setIsRecording(true);
+      recognition.start();
     }
   };
 
-  const stopListening = () => {
-    setIsListening(false);
+  const stopRecording = () => {
+    if (recognition && isRecording) {
+      setIsRecording(false);
+      recognition.stop();
+    }
   };
 
   return (
-    <div className="p-4 bg-zinc-800 text-white rounded-md shadow-lg">
-      <h2 className="text-xl font-bold mb-3">Voice-to-Text Procurement Logging</h2>
+    <div className="p-4 bg-gray-900 rounded-lg shadow-lg flex items-center justify-between">
       <button
-        onClick={isListening ? stopListening : startListening}
-        className={`flex items-center justify-center w-full py-2 px-4 bg-teal-500 text-white rounded-md transition-colors ${
-          isListening ? 'bg-teal-700' : ''
-        }`}
+        onClick={isRecording ? stopRecording : startRecording}
+        className="bg-blue-500 text-white px-4 py-2 rounded-full flex items-center space-x-2"
       >
-        {isListening ? (
-          <span>Stop Listening</span>
+        {isRecording ? (
+          <>
+            <HiOutlineStopCircle size={16} />
+            Stop Recording
+          </>
         ) : (
           <>
-            <Mic2 className="mr-2 h-4 w-4" />
-            <span>Start Listening</span>
+            <HiOutlineMicrophone size={16} />
+            Start Recording
           </>
         )}
       </button>
-      <div className="mt-4 bg-zinc-700 rounded-lg p-3">
-        <p>{transcript}</p>
+      <div className="flex-1 text-white pl-4">
+        {transcript}
       </div>
     </div>
   );
 };
 
-export default VoiceToTextLogging;
+export default VoiceToTextProcurement;
