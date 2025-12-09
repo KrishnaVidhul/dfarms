@@ -1,83 +1,64 @@
-jsx
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform, Alert } from 'react-native';
-import { useTheme } from '@shopify/react-native-paper';
-import { Mic2 } from 'lucide-react-native';
+import { MicIcon } from 'lucide-react';
 
-const VoiceToTextProcurement = () => {
-  const [text, setText] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
-  const theme = useTheme();
+const VoiceToTextLogging = () => {
+  const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState('');
 
-  const startRecording = async () => {
-    try {
-      // Placeholder for actual recording logic
-      Alert.alert('Start Recording', 'Voice-to-Text Procurement is starting...');
-      setIsRecording(true);
-    } catch (error) {
-      console.error('Error starting recording:', error);
+  const startListening = async () => {
+    if ('webkitSpeechRecognition' in window) {
+      const recognition = new webkitSpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+
+      recognition.onresult = (event) => {
+        setTranscript(event.results[0][0].transcript);
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+      setIsListening(true);
+    } else {
+      alert('Your browser does not support speech recognition.');
     }
   };
 
-  const stopRecording = async () => {
-    try {
-      // Placeholder for actual recording logic
-      Alert.alert('Stop Recording', 'Voice-to-Text Procurement has stopped.');
-      setIsRecording(false);
-      // Placeholder for converting voice to text and updating state
-      setText('Converted Text Here');
-    } catch (error) {
-      console.error('Error stopping recording:', error);
+  const handleKeyPress = (event) => {
+    if (event.key === 'Enter') {
+      startListening();
     }
   };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity onPress={isRecording ? stopRecording : startRecording} style={styles.recordButton}>
-        {isRecording ? <Text style={styles.recordButtonText}>Stop Recording</Text> : <Mic2 size="48" color={theme.colors.primary} />}
-      </TouchableOpacity>
-      <TextInput
-        value={text}
-        onChangeText={setText}
-        placeholder="Converted Text"
-        placeholderTextColor={theme.colors.text}
-        multiline
-        style={[styles.textInput, { borderColor: theme.colors.border }]}
-        editable={!isRecording}
+    <div className="bg-[#1e293b] p-6 rounded-lg shadow-md">
+      <h2 className="text-xl font-bold mb-4">Voice-to-Text Procurement Logging</h2>
+      <textarea
+        value={transcript}
+        onChange={(e) => setTranscript(e.target.value)}
+        placeholder="Type or speak your procurement details here..."
+        className="w-full p-2 text-white bg-[#374151] rounded-lg shadow-sm focus:outline-none"
+        onKeyPress={handleKeyPress}
       />
-    </View>
+      <button
+        onClick={startListening}
+        disabled={isListening}
+        className={`mt-4 py-2 px-4 font-semibold rounded-lg ${
+          isListening ? 'bg-[#4b5563] pointer-events-none' : 'bg-[#5f7280]'
+        }`}
+      >
+        {isListening ? <MicIcon className="mr-2" /> : ''}
+        {isListening ? 'Listening...' : 'Start Listening'}
+      </button>
+    </div>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    padding: 24,
-    flex: 1,
-    backgroundColor: '#12161c',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  recordButton: {
-    backgroundColor: '#4e555a',
-    borderRadius: 24,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    marginBottom: 20,
-  },
-  recordButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  textInput: {
-    backgroundColor: '#25282e',
-    borderRadius: 8,
-    padding: 12,
-    height: 100,
-    width: '100%',
-    color: '#ffffff',
-    fontSize: 16,
-  },
-});
-
-export default VoiceToTextProcurement;
+export default VoiceToTextLogging;
