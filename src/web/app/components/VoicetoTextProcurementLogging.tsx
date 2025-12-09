@@ -1,70 +1,81 @@
 jsx
 import React, { useState } from 'react';
-import { Mic2 } from 'lucide-react';
+import LucideRecordCircle from '@lucide/react/record-circle';
+import LucideStopCircle from '@lucide/react/stop-circle';
 
-const VoiceToTextProcurement = () => {
+const VoiceToTextLogging = () => {
   const [isRecording, setIsRecording] = useState(false);
-  const [transcript, setTranscript] = useState('');
+  const [transcription, setTranscription] = useState('');
 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
 
-      let audioChunks = [];
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          const audioChunks = [];
+          audioChunks.push(event.data);
+          const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+          const formData = new FormData();
+          formData.append('file', audioBlob);
 
-      mediaRecorder.ondataavailable = event => {
-        audioChunks.push(event.data);
+          // Simulate API call to recognize speech
+          setTimeout(() => {
+            setTranscription('Fetching transcription...');
+            setTimeout(() => {
+              setTranscription('Finalized transcription goes here.');
+              setIsRecording(false);
+            }, 2000);
+          }, 1000);
+        }
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        
-        recognition.onresult = event => {
-          const transcriptText = Array.from(event.results)
-            .map(result => result[0].transcript)
-            .join('');
-          setTranscript(transcriptText);
-        };
-
-        recognition.onerror = error => {
-          console.error('Error during speech recognition:', error);
-        };
-
-        recognition.start();
+        stream.getTracks().forEach(track => track.stop());
       };
 
       mediaRecorder.start();
       setIsRecording(true);
-
-      const stopRecording = () => {
-        mediaRecorder.stop();
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      setTimeout(stopRecording, 10000); // Stop recording after 10 seconds
     } catch (error) {
       console.error('Error accessing microphone:', error);
     }
   };
 
   return (
-    <div className="bg-gray-800 text-white p-4 rounded-lg shadow-md flex items-center justify-between">
-      <div>
-        <Mic2 className="mr-2" size={24} />
-        {isRecording ? 'Recording...' : 'Start Recording'}
+    <div className="bg-[#121212] p-6 rounded-lg shadow-lg">
+      <h2 className="text-white text-xl font-bold mb-4">Voice-to-Text Procurement Logging</h2>
+      <p className="text-gray-300 text-base mb-4">
+        Capture and log procurement requests using voice.
+      </p>
+      <div className="flex items-center justify-between">
+        {isRecording ? (
+          <LucideStopCircle
+            size={24}
+            color="#FF5722"
+            onClick={() => setIsRecording(false)}
+          />
+        ) : (
+          <LucideRecordCircle
+            size={24}
+            color="#34D399"
+            onClick={startRecording}
+          />
+        )}
+        <button
+          className="bg-[#34D399] text-white font-semibold px-6 py-2 rounded-lg shadow-md hover:bg-[#28a745]"
+          disabled={!isRecording}
+        >
+          Stop Recording
+        </button>
       </div>
-      <button
-        onClick={startRecording}
-        disabled={isRecording}
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-      >
-        {isRecording ? 'Stop' : 'Record'}
-      </button>
+      {transcription && (
+        <p className="text-gray-300 text-base mt-4">
+          Transcription: {transcription}
+        </p>
+      )}
     </div>
   );
 };
 
-export default VoiceToTextProcurement;
+export default VoiceToTextLogging;
