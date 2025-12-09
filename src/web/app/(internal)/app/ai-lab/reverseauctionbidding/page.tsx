@@ -1,18 +1,11 @@
 // @ts-nocheck
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Activity } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { clsx } from 'clsx';
 
-const mockBiddingItems = [
-    { id: 1, name: 'Item 1', currentPrice: 100, highestBid: 0, bids: [] },
-    { id: 2, name: 'Item 2', currentPrice: 200, highestBid: 0, bids: [] },
-    { id: 3, name: 'Item 3', currentPrice: 300, highestBid: 0, bids: [] },
-];
-
-const mockChartData = [
+const data = [
     { name: 'Jan', uv: 400, pv: 2400, amt: 2400 },
     { name: 'Feb', uv: 300, pv: 1397, amt: 2210 },
     { name: 'Mar', uv: 200, pv: 9800, amt: 2290 },
@@ -20,6 +13,12 @@ const mockChartData = [
     { name: 'May', uv: 189, pv: 4800, amt: 2181 },
     { name: 'Jun', uv: 239, pv: 3800, amt: 2500 },
     { name: 'Jul', uv: 349, pv: 4300, amt: 2100 },
+];
+
+const items = [
+    { id: 1, name: 'Item 1', currentPrice: 100, highestBid: 0, bids: [] },
+    { id: 2, name: 'Item 2', currentPrice: 200, highestBid: 0, bids: [] },
+    { id: 3, name: 'Item 3', currentPrice: 300, highestBid: 0, bids: [] },
 ];
 
 const BiddingItem = ({ item, handleBid }) => {
@@ -69,18 +68,22 @@ const BiddingItem = ({ item, handleBid }) => {
 };
 
 const Page = () => {
-    const [biddingItems, setBiddingItems] = useState(mockBiddingItems);
+    const [biddingItems, setBiddingItems] = useState(items);
 
     const handleBid = (item, bidAmount) => {
-        const updatedBiddingItems = [...biddingItems];
-        const currentItem = updatedBiddingItems.find((i) => i.id === item.id);
-        if (currentItem) {
-            if (bidAmount > currentItem.highestBid) {
-                currentItem.highestBid = bidAmount;
-                currentItem.bids.push(bidAmount);
+        try {
+            const updatedBiddingItems = [...biddingItems];
+            const currentItem = updatedBiddingItems.find((i) => i.id === item.id);
+            if (currentItem) {
+                if (bidAmount > currentItem.highestBid) {
+                    currentItem.highestBid = bidAmount;
+                    currentItem.bids.push(bidAmount);
+                }
             }
+            setBiddingItems(updatedBiddingItems);
+        } catch (error) {
+            console.error(error);
         }
-        setBiddingItems(updatedBiddingItems);
     };
 
     return (
@@ -89,7 +92,7 @@ const Page = () => {
             {biddingItems.map((item) => (
                 <BiddingItem key={item.id} item={item} handleBid={handleBid} />
             ))}
-            <LineChart width={800} height={400} data={mockChartData}>
+            <LineChart width={800} height={400} data={data}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
