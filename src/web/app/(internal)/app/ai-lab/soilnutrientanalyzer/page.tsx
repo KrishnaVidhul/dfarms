@@ -1,73 +1,58 @@
 // @ts-nocheck
-import { useState } from 'react';
-import { Activity } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { useClient } from 'next';
+import { SoilNutrient } from '../mock/data/SoilNutrient';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { Circle } from 'lucide-react';
+import { clsx } from 'clsx';
 
 'use client';
 
-const mockData = [
-  { name: 'Jan', pH: 6.5, N: 100, P: 50, K: 200 },
-  { name: 'Feb', pH: 6.2, N: 120, P: 60, K: 220 },
-  { name: 'Mar', pH: 6.8, N: 110, P: 55, K: 210 },
-  { name: 'Apr', pH: 6.5, N: 130, P: 65, K: 230 },
-  { name: 'May', pH: 6.3, N: 105, P: 58, K: 205 },
-  { name: 'Jun', pH: 6.7, N: 115, P: 62, K: 215 },
+const soilNutrientData = [
+  { month: 'Jan', nitrogen: 50, phosphorus: 20, potassium: 30 },
+  { month: 'Feb', nitrogen: 40, phosphorus: 25, potassium: 35 },
+  { month: 'Mar', nitrogen: 55, phosphorus: 22, potassium: 32 },
+  { month: 'Apr', nitrogen: 45, phosphorus: 28, potassium: 38 },
+  { month: 'May', nitrogen: 60, phosphorus: 24, potassium: 36 },
+  { month: 'Jun', nitrogen: 48, phosphorus: 26, potassium: 34 },
 ];
 
 export default function Page() {
-  const [selectedNutrient, setSelectedNutrient] = useState('N');
-
-  const handleNutrientChange = (nutrient) => {
-    setSelectedNutrient(nutrient);
-  };
-
-  const chartData = mockData.map((data) => ({
-    name: data.name,
-    value: data[selectedNutrient],
-  }));
-
   return (
-    <div className="p-4 bg-gray-800 rounded-md">
-      <div className="flex justify-between items-center mb-4">
+    <div className="bg-gray-800 p-4 rounded-lg">
+      <div className="flex justify-between mb-4">
         <h2 className="text-lg font-bold text-gray-200">Soil Nutrient Analyzer</h2>
-        <Activity size={24} className="text-gray-400" />
+        <Circle size={24} className="text-gray-400" />
       </div>
-      <div className="flex justify-between items-center mb-4">
-        <button
-          className={clsx(
-            'px-4 py-2 bg-gray-700 text-gray-200 rounded-md hover:bg-gray-600',
-            selectedNutrient === 'N' ? 'bg-gray-600' : ''
-          )}
-          onClick={() => handleNutrientChange('N')}
-        >
-          Nitrogen (N)
-        </button>
-        <button
-          className={clsx(
-            'px-4 py-2 bg-gray-700 text-gray-200 rounded-md hover:bg-gray-600',
-            selectedNutrient === 'P' ? 'bg-gray-600' : ''
-          )}
-          onClick={() => handleNutrientChange('P')}
-        >
-          Phosphorus (P)
-        </button>
-        <button
-          className={clsx(
-            'px-4 py-2 bg-gray-700 text-gray-200 rounded-md hover:bg-gray-600',
-            selectedNutrient === 'K' ? 'bg-gray-600' : ''
-          )}
-          onClick={() => handleNutrientChange('K')}
-        >
-          Potassium (K)
-        </button>
-      </div>
-      <LineChart width={500} height={300} data={chartData}>
+      <BarChart
+        width={500}
+        height={300}
+        data={soilNutrientData}
+        margin={{
+          top: 5,
+          right: 30,
+          left: 20,
+          bottom: 5,
+        }}
+      >
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" />
+        <XAxis dataKey="month" />
         <YAxis />
         <Tooltip />
-        <Line type="monotone" dataKey="value" stroke="#8884d8" activeDot={{ r: 8 }} />
-      </LineChart>
+        <Bar dataKey="nitrogen" fill="#8884d8" />
+        <Bar dataKey="phosphorus" fill="#82ca9d" />
+        <Bar dataKey="potassium" fill="#ffc107" />
+      </BarChart>
+      <div className="mt-4">
+        <h3 className="text-lg font-bold text-gray-200">Soil Nutrient Levels</h3>
+        <ul className={clsx('list-none', 'mb-0', 'p-0')}>
+          {SoilNutrient.map((nutrient) => (
+            <li key={nutrient.id} className="flex justify-between py-2">
+              <span className="text-gray-200">{nutrient.name}</span>
+              <span className="text-gray-400">{nutrient.level}%</span>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
