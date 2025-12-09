@@ -1,49 +1,41 @@
 jsx
 import React, { useState } from 'react';
-import { Mic2 } from 'lucide-react';
+import { Mic2, FilePlus2 } from 'lucide-react';
 
-const VoiceToTextLogging = () => {
-  const [transcription, setTranscription] = useState('');
+const VoiceToTextProcurement = () => {
   const [isRecording, setIsRecording] = useState(false);
+  const [transcript, setTranscript] = useState('');
 
   const startRecording = async () => {
-    if (typeof window.MediaRecorder === 'undefined') {
-      alert('Your browser does not support media recording.');
-      return;
-    }
-
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      recorder.ondataavailable = event => {
-        const audioChunks = [];
+      const mediaRecorder = new MediaRecorder(stream);
+
+      mediaRecorder.ondataavailable = event => {
         if (event.data.size > 0) {
-          audioChunks.push(event.data);
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const audioBlob = new Blob([reader.result], { type: 'audio/wav' });
+            const formData = new FormData();
+            formData.append('file', audioBlob, 'recording.wav');
+
+            // Simulate API call
+            fetch('/api/voice-to-text', {
+              method: 'POST',
+              body: formData,
+            })
+              .then(response => response.json())
+              .then(data => {
+                setTranscript(prevTranscript => prevTranscript + data.transcript);
+              });
+          };
+          reader.readAsArrayBuffer(event.data);
         }
-        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const audioBuffer = new AudioContext().decodeAudioData(reader.result).then(buffer => {
-            // Convert buffer to text using a speech recognition API
-            const recognition = new webkitSpeechRecognition();
-            recognition.continuous = false;
-            recognition.interimResults = false;
-            recognition.lang = 'en-US';
-            recognition.onresult = result => {
-              setTranscription(result.results[0][0].transcript);
-            };
-            recognition.onerror = error => {
-              console.error('Error during speech recognition:', error);
-            };
-            recognition.start();
-          });
-        };
-        reader.readAsArrayBuffer(audioBlob);
       };
-      recorder.onstop = () => {
-        setIsRecording(false);
-      };
-      recorder.start();
+
+      mediaRecorder.onstop = () => setIsRecording(false);
+
+      mediaRecorder.start();
       setIsRecording(true);
     } catch (error) {
       console.error('Error accessing microphone:', error);
@@ -52,31 +44,56 @@ const VoiceToTextLogging = () => {
 
   const stopRecording = () => {
     if (isRecording) {
-      // Assuming there's a way to stop the MediaRecorder
-      // This is just a placeholder, as MediaRecorder does not have a direct stop method
-      setIsRecording(false);
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        const audioChunks = [];
+
+        const mediaRecorder = new MediaRecorder(stream);
+
+        mediaRecorder.ondataavailable = event =>
+          audioChunks.push(event.data);
+
+        mediaRecorder.onstop = () => {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+          const formData = new FormData();
+          formData.append('file', audioBlob, 'recording.wav');
+
+          // Simulate API call
+          fetch('/api/voice-to-text', {
+            method: 'POST',
+            body: formData,
+          })
+            .then(response => response.json())
+            .then(data => {
+              setTranscript(prevTranscript => prevTranscript + data.transcript);
+            });
+        };
+
+        mediaRecorder.stop();
+        setIsRecording(false);
+      });
     }
   };
 
   return (
-    <div className="bg-gray-800 p-6 rounded-lg shadow-md max-w-sm mx-auto">
-      <h2 className="text-xl font-bold text-white mb-4">Voice-to-Text Logging</h2>
+    <div className="bg-gray-900 p-4 rounded-lg shadow-lg flex items-center space-x-2">
       <button
         onClick={isRecording ? stopRecording : startRecording}
-        className={`w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ${
-          isRecording ? 'bg-red-500 hover:bg-red-700' : ''
+        className={`p-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 focus:outline-none ${
+          isRecording ? 'bg-red-500 hover:bg-red-600' : ''
         }`}
       >
-        {isRecording ? <Mic2 className="inline" /> : <Mic2 className="inline" />}{' '}
-        {isRecording ? 'Stop Recording' : 'Start Recording'}
+        {isRecording ? <Mic2 size={18} /> : <FilePlus2 size={18} />}
       </button>
-      {transcription && (
-        <div className="mt-4 bg-gray-700 p-3 rounded">
-          <p className="text-white text-sm">{transcription}</p>
-        </div>
-      )}
+      <div className="flex-grow overflow-hidden">
+        <textarea
+          value={transcript}
+          onChange={e => setTranscript(e.target.value)}
+          className="w-full h-24 p-2 bg-gray-800 text-white border-none rounded-md focus:outline-none resize-none"
+          placeholder="Transcript will appear here..."
+        />
+      </div>
     </div>
   );
 };
 
-export default VoiceToTextLogging;
+export default VoiceToTextProcurement;
