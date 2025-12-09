@@ -1,73 +1,67 @@
 jsx
 import React, { useState } from 'react';
-import { Mic, FilePlus2 } from 'lucide-react';
+import { Mic2, XCircle } from 'lucide-react';
 
-const VoiceToTextProcurementLogging = () => {
-  const [isRecording, setIsRecording] = useState(false);
-  const [transcript, setTranscript] = useState('');
+const VoiceToTextProcurement = () => {
+  const [isListening, setIsListening] = useState(false);
+  const [transcription, setTranscription] = useState('');
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+  const startListening = async () => {
+    if ('webkitSpeechRecognition' in window) {
+      const recognition = new (window as any).webkitSpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
 
-      let audioChunks = [];
+      recognition.onstart = () => setIsListening(true);
+      recognition.onerror = (event) => {
+        console.error('Error: ' + event.error);
+        setIsListening(false);
+      };
+      recognition.onend = () => setIsListening(false);
 
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunks.push(event.data);
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map((result) => result[0].transcript)
+          .join('');
+        setTranscription(transcript);
       };
 
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-        const formData = new FormData();
-        formData.append('audio', audioBlob);
-
-        // Simulate uploading to server
-        fetch('/api/voice-to-text', {
-          method: 'POST',
-          body: formData,
-        })
-        .then(response => response.json())
-        .then(data => {
-          setTranscript(data.transcript);
-        });
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (err) {
-      console.error('Failed to record audio:', err);
+      recognition.start();
+    } else {
+      console.error('SpeechRecognition not supported in this browser.');
     }
   };
 
-  const stopRecording = () => {
-    if (isRecording) {
-      // Assuming the media recorder is defined and started
-      mediaRecorder.stop();
-      setIsRecording(false);
-    }
+  const stopListening = () => {
+    setIsListening(false);
   };
 
   return (
-    <div className="bg-gray-800 p-6 rounded-lg shadow-md w-full max-w-2xl mx-auto">
-      <h2 className="text-xl font-bold text-white mb-4">Voice-to-Text Procurement Logging</h2>
-      <button
-        onClick={isRecording ? stopRecording : startRecording}
-        className={`bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg flex items-center justify-center ${
-          isRecording && 'bg-red-500 hover:bg-red-600'
-        }`}
-      >
-        {isRecording ? <Mic className="mr-2" /> : <FilePlus2 className="mr-2" />}
-        {isRecording ? 'Stop Recording' : 'Start Recording'}
-      </button>
-      {transcript && (
-        <div className="bg-gray-700 p-4 mt-4 rounded-lg shadow-md">
-          <p className="text-white text-base font-semibold">Transcript:</p>
-          <pre className="text-gray-200 whitespace-pre-wrap">{transcript}</pre>
+    <div className="bg-[#1a1b24] text-white p-4 rounded-lg shadow-md">
+      <h2 className="text-xl font-bold mb-4">Voice-to-Text Procurement Logging</h2>
+      {isListening ? (
+        <button
+          onClick={stopListening}
+          className="flex items-center justify-center bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition"
+        >
+          Stop Listening <XCircle className="ml-2 h-5 w-5" />
+        </button>
+      ) : (
+        <button
+          onClick={startListening}
+          className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition"
+        >
+          Start Listening <Mic2 className="ml-2 h-5 w-5" />
+        </button>
+      )}
+      {transcription && (
+        <div className="mt-4 bg-[#31333d] p-4 rounded-lg shadow-md">
+          <p>Transcription:</p>
+          <pre className="text-sm">{transcription}</pre>
         </div>
       )}
     </div>
   );
 };
 
-export default VoiceToTextProcurementLogging;
+export default VoiceToTextProcurement;
