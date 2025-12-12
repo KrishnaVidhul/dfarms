@@ -1,0 +1,6 @@
+2025-12-11 21:18:19,643 - INFO - ============================================================
+2025-12-11 21:18:19,643 - INFO - Production Market Data Fetcher
+2025-12-11 21:18:19,643 - INFO - API Key: 579b464db66ec23bdd00...
+2025-12-11 21:18:19,643 - INFO - ============================================================
+2025-12-11 21:18:19,652 - ERROR - ✗ Database connection failed: could not translate host name "db" to address: nodename nor servname provided, or not known
+

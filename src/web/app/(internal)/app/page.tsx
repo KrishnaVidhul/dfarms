@@ -7,6 +7,7 @@ import {
 import ProcurementCard from '../../../components/dashboard/ProcurementCard';
 import ProductionYieldChart from '../../../components/dashboard/ProductionYieldChart';
 import StockBreakdownChart from '../../../components/dashboard/StockBreakdownChart';
+import AgentStatusWidget from '../../../components/dashboard/AgentStatusWidget';
 import ChatComponent from '../../components/ChatComponent';
 
 // Force dynamic to ensure data is fresh on refresh
@@ -59,6 +60,16 @@ export default async function Page({ searchParams }: { searchParams: { commodity
         {/* Widget A: Procurement (1 Col) */}
         <div className="lg:col-span-1">
           <ProcurementCard data={procurementData} commodityName={commodityName} />
+        </div>
+
+        {/* Widget B: Live Agent Status (1 Col - NEW) */}
+        <div className="lg:col-span-1">
+          <AgentStatusWidget />
+        </div>
+
+        {/* Widget C: Production Yield (2 Cols) */}
+        <div className="lg:col-span-2">
+          <ProductionYieldChart data={yieldData} />
         </div>
 
         {/* Widget B: Production Yield (2 Cols - Main Focus) */}

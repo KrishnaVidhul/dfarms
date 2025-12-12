@@ -7,11 +7,25 @@ import CommoditySwitcher from '../CommoditySwitcher';
 
 export default function AppHeader() {
     const [showNotifications, setShowNotifications] = useState(false);
-    const [notifications, setNotifications] = useState([
-        { id: 1, title: 'Low Stock Alert', message: 'Chana stock is below 500kg threshold.', time: '10m ago', type: 'critical' },
-        { id: 2, title: 'Market Trend', message: 'Tur Dal prices rising in Akola.', time: '1h ago', type: 'info' },
-        { id: 3, title: 'Bill Paid', message: 'Invoice #INV-2024-001 cleared.', time: '2h ago', type: 'success' },
-    ]);
+    const [notifications, setNotifications] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchNotifications = async () => {
+            try {
+                const res = await fetch('/api/notifications');
+                const data = await res.json();
+                if (Array.isArray(data)) {
+                    setNotifications(data);
+                }
+            } catch (e) {
+                console.error('Failed to fetch notifications');
+            }
+        };
+
+        fetchNotifications();
+        const interval = setInterval(fetchNotifications, 60000); // 1 min poll
+        return () => clearInterval(interval);
+    }, []);
 
     const { isSidebarOpen, toggleSidebar } = useUIStore();
 

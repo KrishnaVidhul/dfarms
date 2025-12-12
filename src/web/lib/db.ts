@@ -25,6 +25,16 @@ if (!globalForDb.conn) {
 
 pool = globalForDb.conn;
 
+export async function runQuery(text: string, params: any[] = []) {
+    try {
+        const res = await pool.query(text, params);
+        return res;
+    } catch (e) {
+        console.error('Database Query Error:', e);
+        throw e;
+    }
+}
+
 export async function getInventory(commodityId?: number) {
     try {
         let query = 'SELECT * FROM inventory';
