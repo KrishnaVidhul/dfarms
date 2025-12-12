@@ -241,17 +241,41 @@ def main():
 
             # Analyze
             results[commodity] = analyze_commodity(commodity)
-            
-            # Log SUCCESS
+            analysis_data = results[commodity]
+            rec = analysis_data.get('recommendation', {})
+
+            # Log SUCCESS to agent_jobs
             if conn and job_id:
                 cur = conn.cursor()
-                rec = results[commodity].get('recommendation', {})
                 summary = f"Recommendation: {rec.get('recommendation', 'N/A')} (Conf: {rec.get('confidence', 0)}%)"
                 cur.execute("""
                     UPDATE agent_jobs 
                     SET status = 'completed', result_summary = %s, updated_at = NOW()
                     WHERE id = %s
                 """, (summary, job_id))
+                
+                # SAVE TO MARKET_INSIGHTS (NEW Persist Logic)
+                import json
+                try:
+                    cur.execute("""
+                        INSERT INTO market_insights 
+                        (commodity, recommendation, confidence_score, current_price, target_price, stop_loss, key_factors, technical_data, ai_analysis, created_at, valid_until)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW() + INTERVAL '5 days')
+                    """, (
+                        commodity,
+                        rec.get('recommendation', 'HOLD'),
+                        rec.get('confidence', 0),
+                        rec.get('current_price', 0),
+                        rec.get('target_price', 0),
+                        rec.get('stop_loss', 0),
+                        json.dumps(rec.get('key_factors', [])),
+                        json.dumps(analysis_data.get('technical_analysis', {})),
+                        analysis_data.get('ai_analysis', ''),
+                    ))
+                    print(f"✅ Saved insights for {commodity} to DB.")
+                except Exception as db_err:
+                    print(f"⚠️ Failed to save insights for {commodity}: {db_err}")
+
                 conn.commit()
                 cur.close()
 
