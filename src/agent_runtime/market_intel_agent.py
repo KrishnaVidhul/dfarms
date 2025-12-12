@@ -185,16 +185,35 @@ def main():
         print("ERROR: GROQ_API_KEY not set")
         sys.exit(1)
     
-    # Analyze key commodities
-    commodities = [
-        'Arhar(Tur/Red Gram)(Whole)', 
-        'Rice', 
-        'Wheat', 
-        'Soyabean', 
-        'Cotton'
-    ]
-    
-    print(f"Analyzing {len(commodities)} commodities...\n")
+    # Get DB URL
+    DB_URL = os.environ.get('DATABASE_URL')
+    if not DB_URL:
+        print("ERROR: DATABASE_URL not set")
+        sys.exit(1)
+
+    # Fetch ALL active commodities from DB
+    try:
+        import psycopg2
+        conn = psycopg2.connect(DB_URL)
+        cur = conn.cursor()
+        print("🔍 Fetching active commodity list from database...")
+        cur.execute("SELECT DISTINCT commodity FROM market_prices ORDER BY commodity")
+        rows = cur.fetchall()
+        commodities = [row[0] for row in rows]
+        conn.close()
+        print(f"✅ Found {len(commodities)} active commodities for analysis.")
+    except Exception as e:
+        print(f"ERROR fetching commodities: {e}")
+        # Fallback to defaults if DB fails
+        commodities = [
+            'Arhar(Tur/Red Gram)(Whole)', 
+            'Rice', 
+            'Wheat', 
+            'Soyabean', 
+            'Cotton'
+        ]
+
+    print(f"Analyzing {len(commodities)} commodities (Process will take time)...\n")
     
     results = analyze_multiple_commodities(commodities)
     
