@@ -273,10 +273,11 @@ def main():
                         analysis_data.get('ai_analysis', ''),
                     ))
                     print(f"✅ Saved insights for {commodity} to DB.")
+                    conn.commit() # Commit this transaction
                 except Exception as db_err:
                     print(f"⚠️ Failed to save insights for {commodity}: {db_err}")
+                    conn.rollback() # Reset transaction so next one can proceed
 
-                conn.commit()
                 cur.close()
 
         except Exception as e:
