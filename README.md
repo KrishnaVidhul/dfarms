@@ -11,7 +11,7 @@
 ## 📸 Dashboard Preview
 
 ![Dashboard Overview](docs/assets/1_dashboard.png)
-*(Main Command Center: Real-time alerts, stock levels, and quick actions)*
+*(Note: Please upload your real dashboard screenshot here to replace this placeholder)*
 
 ---
 
