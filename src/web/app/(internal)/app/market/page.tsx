@@ -128,7 +128,7 @@ export default function MarketPage() {
                 <div>
                     <h1 className="text-2xl font-bold text-white">Market Intelligence</h1>
                     <p className="text-zinc-400 text-sm mt-1">
-                        e-NAM/AGMARKNET commodity prices • Last updated: {lastUpdated || 'Loading...'}
+                        National Agriculture Market Data (Agmarknet) • Last updated: {lastUpdated || 'Loading...'}
                     </p>
                 </div>
                 <div className="flex gap-2">
