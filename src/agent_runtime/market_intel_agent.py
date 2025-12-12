@@ -215,7 +215,69 @@ def main():
 
     print(f"Analyzing {len(commodities)} commodities (Process will take time)...\n")
     
-    results = analyze_multiple_commodities(commodities)
+    # Analyze each commodity with Job Logging
+    results = {}
+    
+    import psycopg2
+    try:
+        conn = psycopg2.connect(DB_URL)
+    except:
+        conn = None
+
+    for commodity in commodities:
+        job_id = None
+        try:
+            # Log START
+            if conn:
+                cur = conn.cursor()
+                cur.execute("""
+                    INSERT INTO agent_jobs (task_type, status, result_summary, created_at, updated_at)
+                    VALUES (%s, %s, %s, NOW(), NOW())
+                    RETURNING id
+                """, (f"Market Analysis: {commodity}", "in_progress", "Initializing analysis..."))
+                job_id = cur.fetchone()[0]
+                conn.commit()
+                cur.close()
+
+            # Analyze
+            results[commodity] = analyze_commodity(commodity)
+            
+            # Log SUCCESS
+            if conn and job_id:
+                cur = conn.cursor()
+                rec = results[commodity].get('recommendation', {})
+                summary = f"Recommendation: {rec.get('recommendation', 'N/A')} (Conf: {rec.get('confidence', 0)}%)"
+                cur.execute("""
+                    UPDATE agent_jobs 
+                    SET status = 'completed', result_summary = %s, updated_at = NOW()
+                    WHERE id = %s
+                """, (summary, job_id))
+                conn.commit()
+                cur.close()
+
+        except Exception as e:
+            print(f"Error analyzing {commodity}: {e}")
+            results[commodity] = {
+                'commodity': commodity,
+                'status': 'error',
+                'message': str(e)
+            }
+            # Log FAILURE
+            if conn and job_id:
+                try:
+                    cur = conn.cursor()
+                    cur.execute("""
+                        UPDATE agent_jobs 
+                        SET status = 'failed', result_summary = %s, updated_at = NOW()
+                        WHERE id = %s
+                    """, (str(e), job_id))
+                    conn.commit()
+                    cur.close()
+                except:
+                    pass
+
+    if conn:
+        conn.close()
     
     # Print summary
     print("\n" + "="*60)
