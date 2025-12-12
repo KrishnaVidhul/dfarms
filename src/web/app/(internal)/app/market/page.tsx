@@ -42,7 +42,7 @@ export default function MarketPage() {
                 ...(filters.state && { state: filters.state }),
                 ...(filters.startDate && { startDate: filters.startDate }),
                 ...(filters.endDate && { endDate: filters.endDate }),
-                limit: '500'
+                limit: '2000'
             });
 
             const res = await fetch(`/api/market?${params}`);
