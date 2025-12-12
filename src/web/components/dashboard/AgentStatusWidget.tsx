@@ -33,10 +33,11 @@ export default function AgentStatusWidget() {
 
             const res = await fetch('/api/agents/live-status');
             const data = await res.json();
-            setActiveJob(data.active);
-            setRecentJobs(data.recent);
+            setActiveJob(data.active || null);
+            setRecentJobs(data.recent || []);
         } catch (error) {
             console.error('Error fetching agent status:', error);
+            setRecentJobs([]);
         } finally {
             setLoading(false);
         }

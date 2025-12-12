@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { runQuery } from '../../../lib/db';
+import { runQuery } from '../../../../lib/db';
 
 export const dynamic = 'force-dynamic';
 
