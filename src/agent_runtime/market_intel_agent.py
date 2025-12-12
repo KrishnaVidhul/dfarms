@@ -186,7 +186,13 @@ def main():
         sys.exit(1)
     
     # Analyze key commodities
-    commodities = ['Wheat', 'Rice', 'Tur Dal', 'Soybean', 'Cotton']
+    commodities = [
+        'Arhar(Tur/Red Gram)(Whole)', 
+        'Rice', 
+        'Wheat', 
+        'Soyabean', 
+        'Cotton'
+    ]
     
     print(f"Analyzing {len(commodities)} commodities...\n")
     
