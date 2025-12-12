@@ -243,6 +243,18 @@ def main():
     logger.info("="*60)
     logger.info(f"✓ Data fetch complete!")
     logger.info(f"  Total records inserted/updated: {total_inserted}")
+    
+    # Enforce 5-Day Retention Policy
+    try:
+        logger.info("🧹 Enforcing 5-Day Retention Policy...")
+        cur.execute("DELETE FROM market_prices WHERE arrival_date < CURRENT_DATE - INTERVAL '5 days'")
+        deleted_count = cur.rowcount
+        conn.commit()
+        logger.info(f"  ✓ Cleanup successful: {deleted_count} old records deleted.")
+    except Exception as e:
+        logger.error(f"  ✗ Retention cleanup failed: {e}")
+        conn.rollback()
+
     logger.info("="*60)
     
     # Generate AI insights for updated data

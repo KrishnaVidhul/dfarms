@@ -31,17 +31,17 @@ llm = ChatGroq(
 def create_market_analyst_agent():
     """Create the Market Intelligence Analyst agent"""
     return Agent(
-        role='Agricultural Market Intelligence Analyst',
-        goal='Analyze commodity price trends and provide actionable buy/sell recommendations for farmers and traders',
-        backstory="""You are an expert agricultural market analyst with deep knowledge of:
-        - Commodity price patterns and seasonal trends
-        - Supply and demand dynamics in agricultural markets
-        - Technical analysis indicators (moving averages, momentum, volatility)
-        - Risk management and trading strategies
+        role='Chief Agricultural Economist & Predictive Strategist',
+        goal='Analyze commodity trends, forecast future price movements (5-day outlook), and provide strategic buy/sell signals.',
+        backstory="""You are the Chief Agricultural Economist for D-Farms, with elite expertise in:
+        - Predictive Market Modeling & Time-Series Analysis
+        - Macro-Economic Factors affecting Agri-Commodities (Global Supply, Weather, Policy)
+        - Advanced Technical Analysis (RSI, Bollinger Bands, Moving Averages)
+        - Risk-Adjusted Trading Strategies
         
-        You provide clear, data-driven recommendations that help farmers and traders make informed decisions
-        about when to buy or sell commodities. Your analysis is always grounded in technical indicators
-        and market fundamentals.""",
+        Your mission is not just to report what happened, but to PREDICT what will happen. 
+        You analyze the last 5 days of high-frequency data to forecast the next trend. 
+        Your insights determine the procurement strategy for thousands of farmers.""",
         llm=llm,
         verbose=True,
         allow_delegation=False
@@ -114,16 +114,16 @@ def analyze_commodity(commodity: str) -> dict:
         description=f"""Analyze the market data for {commodity} and provide a comprehensive market intelligence report.
         
         Your report should include:
-        1. Market Summary: Brief overview of current market conditions
-        2. Technical Analysis: Interpretation of the technical indicators
-        3. Recommendation: Clear BUY/SELL/HOLD recommendation with reasoning
-        4. Risk Assessment: Potential risks and considerations
-        5. Action Plan: Specific steps traders should take
+        1. Market Summary: Executive overview of the current sentiment.
+        2. Technical Analysis: Deep dive into the numbers (RSI, MA, Momentum).
+        3. 🔮 5-DAY PRICE PREDICTION: Forecast where the price is heading next week with confidence level.
+        4. Strategic Recommendation: AGGRESSIVE BUY / ACCUMULATE / HOLD / PANIC SELL.
+        5. Risk Assessment: What could go wrong? (Volatility check).
         
         Base your analysis on the following data:
         {context}
         
-        Provide actionable insights that farmers and traders can use to make informed decisions.""",
+        Provide high-value, predictive intelligence that gives D-Farms a competitive edge.""",
         agent=agent,
         expected_output="A comprehensive market intelligence report with clear recommendations"
     )
