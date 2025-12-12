@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import { pool } from '@/lib/db';
 import Link from 'next/link';
 import fs from 'fs';
 import path from 'path';
@@ -9,15 +9,9 @@ import LiveRoadmap from './LiveRoadmap';
 // Force dynamic to ensure data is fresh
 export const dynamic = 'force-dynamic';
 
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-});
-
 async function getUsers() {
     try {
-        const client = await pool.connect();
-        const res = await client.query('SELECT id, username, role, created_at FROM users ORDER BY id ASC');
-        client.release();
+        const res = await pool.query('SELECT id, username, role, created_at FROM users ORDER BY id ASC');
         return res.rows;
     } catch (err) {
         console.error('DB Error:', err);
@@ -27,9 +21,7 @@ async function getUsers() {
 
 async function getMarketPrices() {
     try {
-        const client = await pool.connect();
-        const res = await client.query('SELECT * FROM market_prices ORDER BY fetched_at DESC LIMIT 50');
-        client.release();
+        const res = await pool.query('SELECT * FROM market_prices ORDER BY fetched_at DESC LIMIT 50');
         return res.rows;
     } catch (err) {
         console.error('DB Error:', err);
@@ -95,10 +87,8 @@ export default async function AdminPanel() {
 
     try {
         console.log("Fetching Roadmap Data...");
-        const client = await pool.connect();
-        const res = await client.query("SELECT * FROM feature_roadmap ORDER BY created_at DESC");
+        const res = await pool.query("SELECT * FROM feature_roadmap ORDER BY created_at DESC");
         const rows = res.rows;
-        client.release();
 
         roadmap.planned = rows.filter((r: any) => r.status === 'PLANNED' || r.status === 'Discovery');
         roadmap.building = rows.filter((r: any) => r.status === 'BUILDING');

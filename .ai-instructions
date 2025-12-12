@@ -1,0 +1,42 @@
+# AI Agent Instructions
+
+## CRITICAL: Read First
+
+Before making ANY changes, read: `ARCHITECTURE.md`
+
+This file contains:
+- What NOT to touch (production code that works)
+- Safe operations guide
+- System architecture
+- Troubleshooting
+
+## Quick Rules
+
+1. ✅ Add new features as separate modules
+2. ❌ Don't modify working production code
+3. ✅ Follow existing patterns
+4. ❌ Don't refactor "to improve" - if it works, leave it
+5. ✅ Test thoroughly before deploying
+
+## Working Production Files (DO NOT MODIFY)
+
+- `src/scripts/fetch_production_data.py`
+- `src/agent_runtime/market_intel_agent.py`
+- `src/agent_runtime/tools/market_analysis_tools.py`
+- `src/agent_runtime/tools/news_analysis_tools.py`
+- `src/web/components/market/AIInsights.tsx`
+
+## Documentation Hierarchy
+
+1. `ARCHITECTURE.md` - Read this first
+2. `docs/MARKET_INTELLIGENCE_GUIDE.md` - Detailed guide
+3. `README.md` - Quick reference
+
+## When User Asks to "Improve"
+
+1. Check if it's working - if yes, suggest additions instead
+2. Ask WHY they want changes
+3. Propose new features alongside existing code
+4. Never break what works
+
+Remember: The best code is code that doesn't need to be written.

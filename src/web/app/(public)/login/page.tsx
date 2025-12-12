@@ -33,18 +33,18 @@ export default function LoginPage() {
             }
 
             // Redirect based on role
+            // Use window.location.href to force hard reload and ensure cookies are sent
             if (data.role === 'admin' || data.role === 'super_admin') {
-                router.push('/admin');
+                window.location.href = '/admin';
             } else if (data.role === 'driver') {
-                router.push('/driver-portal');
+                window.location.href = '/driver-portal';
             } else if (data.role === 'staff') {
-                router.push('/staff-portal');
+                window.location.href = '/staff-portal';
             } else {
-                router.push('/app');
+                window.location.href = '/app';
             }
 
-            // Force refresh to update middleware/nav state
-            router.refresh();
+            // router.refresh() not needed with hard redirect
 
         } catch (err: any) {
             setError(err.message);

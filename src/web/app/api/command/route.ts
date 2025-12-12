@@ -10,25 +10,18 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Command is required' }, { status: 400 });
         }
 
-        // Write to the shared IPC file that super_agent.py watches
-        const ipcDir = path.join(process.cwd(), 'ipc');
-        if (!fs.existsSync(ipcDir)) {
-            fs.mkdirSync(ipcDir, { recursive: true });
-        }
+        // Write to the shared Database Table that super_agent.py polls
+        // Use the singleton pool from lib/db
+        const { pool } = await import('@/lib/db');
 
-        const filePath = path.join(ipcDir, 'internal_command.json');
+        const result = await pool.query(
+            "INSERT INTO agent_jobs (command, status) VALUES ($1, 'PENDING') RETURNING id",
+            [command]
+        );
 
-        // Write as JSON object. Overwrite is acceptable as agent processes one at a time.
-        const payload = {
-            "command": command,
-            "timestamp": new Date().toISOString()
-        };
+        console.log(`Command DB Inserted: ${command}, ID: ${result.rows[0].id}`);
 
-        fs.writeFileSync(filePath, JSON.stringify(payload, null, 2));
-
-        console.log(`Command IPC sent: ${command}`);
-
-        return NextResponse.json({ success: true, message: 'Command sent to Agent' });
+        return NextResponse.json({ success: true, message: 'Command sent to Agent (Queued)', jobId: result.rows[0].id });
     } catch (error) {
         console.error('Error writing command:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

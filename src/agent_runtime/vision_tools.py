@@ -4,7 +4,13 @@ import io
 import base64
 import json
 import psycopg2
-from crewai.tools import BaseTool
+try:
+    from crewai.tools import BaseTool
+except ImportError:
+    try:
+        from crewai_tools import BaseTool
+    except ImportError:
+        from langchain.tools import BaseTool
 from PIL import Image
 import requests
 
@@ -15,17 +21,31 @@ class QualityGradingTool(BaseTool):
     def _run(self, image_path: str) -> str:
         try:
             print(f"DEBUG: Received image_path raw: '{image_path}'")
-            # 1. Validate File
-            image_path = image_path.strip().strip("'").strip('"') # Remove quotes if agent added them
-            print(f"DEBUG: Cleaned image_path: '{image_path}'")
+            # 1. Validate File or URL
+            image_path = image_path.strip().strip("'").strip('"') # Remove quotes
+            print(f"DEBUG: Processing image path: '{image_path}'")
             
-            if not os.path.exists(image_path):
-                print(f"DEBUG: File not found at '{image_path}'")
-                return f"Error: Image does not exist at {image_path}"
+            base64_image = ""
+            
+            if image_path.startswith("http://") or image_path.startswith("https://"):
+                 # Handle URL
+                 try:
+                     print(f"Downloading image from URL: {image_path}")
+                     resp = requests.get(image_path, timeout=30)
+                     if resp.status_code == 200:
+                         base64_image = base64.b64encode(resp.content).decode('utf-8')
+                     else:
+                         return f"Error: Failed to download image from URL. Status: {resp.status_code}"
+                 except Exception as dl_err:
+                     return f"Error downloading image: {str(dl_err)}"
+            else:
+                # Handle Local File
+                if not os.path.exists(image_path):
+                    print(f"DEBUG: File not found at '{image_path}'")
+                    return f"Error: Image does not exist at {image_path}"
 
-            # 2. Encode Image
-            with open(image_path, "rb") as image_file:
-                base64_image = base64.b64encode(image_file.read()).decode('utf-8')
+                with open(image_path, "rb") as image_file:
+                    base64_image = base64.b64encode(image_file.read()).decode('utf-8')
 
             # 3. Call LLaVA (Ollama)
             ollama_url = os.environ.get("OLLAMA_HOST", "http://host.docker.internal:11434")

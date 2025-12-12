@@ -1,6 +1,12 @@
 import os
 import psycopg2
-from crewai.tools import BaseTool
+try:
+    from crewai.tools import BaseTool
+except ImportError:
+    try:
+        from crewai_tools import BaseTool
+    except ImportError:
+        from langchain.tools import BaseTool
 import json
 
 # Mocking embedding generation if langchain/openai not installed or configured

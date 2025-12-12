@@ -26,12 +26,7 @@ export default function LiveRoadmap({ initialData }: { initialData: RoadmapData 
     useEffect(() => {
         const interval = setInterval(async () => {
             try {
-                // Poll backend via a new API route we'll create, or just revalidate path
-                // For simplicity in this Next.js app, we can router.refresh() to re-run server props
-                // provided the page allows dynamic fetching.
-                router.refresh();
-
-                // Ideally, we fetch from an API route to avoid full page reload feel
+                // Fetch from API route to avoid full page reload feel
                 const res = await fetch('/api/agents/roadmap');
                 if (res.ok) {
                     const data = await res.json();
@@ -40,7 +35,7 @@ export default function LiveRoadmap({ initialData }: { initialData: RoadmapData 
             } catch (e) {
                 console.error("Polling error", e);
             }
-        }, 3000); // 3 seconds
+        }, 10000); // 10 seconds
 
         return () => clearInterval(interval);
     }, [router]);

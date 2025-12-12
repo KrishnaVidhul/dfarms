@@ -4,7 +4,13 @@ import json
 import psycopg2
 import time
 import glob
-from crewai.tools import BaseTool
+try:
+    from crewai.tools import BaseTool
+except ImportError:
+    try:
+        from crewai_tools import BaseTool
+    except ImportError:
+        from langchain.tools import BaseTool
 
 class SimulateUserAction(BaseTool):
     name: str = "Simulate Action"

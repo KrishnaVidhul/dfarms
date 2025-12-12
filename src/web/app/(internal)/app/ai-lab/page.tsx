@@ -1,19 +1,13 @@
-import { Pool } from 'pg';
+import { pool } from '@/lib/db';
 import Link from 'next/link';
 import { Bot, Rocket } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-});
-
 async function getDeployedFeatures() {
     try {
-        const client = await pool.connect();
         // Get features that are deployed
-        const res = await client.query("SELECT * FROM feature_roadmap WHERE status = 'DEPLOYED' ORDER BY created_at DESC");
-        client.release();
+        const res = await pool.query("SELECT * FROM feature_roadmap WHERE status = 'DEPLOYED' ORDER BY created_at DESC");
         return res.rows;
     } catch (err) {
         return [];

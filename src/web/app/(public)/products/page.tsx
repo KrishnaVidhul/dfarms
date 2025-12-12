@@ -1,11 +1,7 @@
-import { Pool } from 'pg';
+import { pool } from '@/lib/db';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
-
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-});
 
 async function getInventory() {
     try {

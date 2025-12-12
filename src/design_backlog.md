@@ -8,3 +8,17 @@ Generated from UAT Session with Logistics Head (Arjun)
 | 1 | **Farmer Payment Portal (Mobile PWA)** | Web/Mobile | High (Vendor Trust) | High | Mobile-optimized login for farmers to view payment status and ledger. |
 | 2 | **Real-time Rate Widget Overlay** | Procurement | Medium | Medium | Show live market price difference (e.g., '+5% vs Market') next to the price input. |
 | 3 | **Live Logistics Map** | Logistics | Medium | High | Mapbox integration to show warehouse and truck locations. |
+
+## Feature: AI Visual Grading v2
+**Source:** Computer Vision Research
+**Idea:** Enhance grading to detect 'Weevil Damage' specifically using localized contrast enhancement.
+**Priority:** Medium
+**Status:** PROPOSED
+
+
+## Feature: Voice-First Navigation
+**Source:** UX Trends India
+**Idea:** Add a microphone button to every screen. Farmers prefer speaking 'Add 100kg Chana' over typing.
+**Priority:** Medium
+**Status:** PROPOSED
+

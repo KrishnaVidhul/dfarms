@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import ChatWidget from '../../components/ChatWidget';
 
 export default function LandingPage() {
     return (
@@ -44,9 +43,6 @@ export default function LandingPage() {
             <footer className="p-6 text-center text-gray-600 text-sm border-t border-gray-800">
                 &copy; 2025 D Farms. Agentic Logistics Powered.
             </footer>
-
-            {/* Sales Chat */}
-            <ChatWidget />
         </main>
     );
 }

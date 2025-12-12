@@ -44,14 +44,24 @@ class PublicQuoteTool(BaseTool):
             if not result:
                 return f"We do not have a current quote for {pulse_type}. Please contact support."
             
-            # Parse price string "₹9200 per quintal" -> 9200
-            price_str = result[0]
-            import re
-            match = re.search(r'[\d.]+', price_str.replace(',', ''))
-            if not match:
-                return f"Error parsing price: {price_str}"
+            # Handle both String (old format) and Numeric (new schema)
+            val = result[0]
+            base_price = 0.0
             
-            base_price = float(match.group())
+            if isinstance(val, (int, float)):
+                 base_price = float(val)
+            # Handle Decimal (psycopg2 default for NUMERIC)
+            elif hasattr(val, 'to_eng_string'): 
+                 base_price = float(val)
+            else:
+                # Fallback for String parsing "₹9200 per quintal"
+                price_str = str(val)
+                import re
+                match = re.search(r'[\d.]+', price_str.replace(',', ''))
+                if not match:
+                    return f"Error parsing price: {price_str}"
+                base_price = float(match.group())
+
             selling_price = base_price * 1.20 # 20% Margin
             
             return f"Our rate for {pulse_type} is ₹{selling_price:.2f} per quintal (Inclusive of logistics)."

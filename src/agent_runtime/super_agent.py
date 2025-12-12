@@ -1,32 +1,204 @@
+
+# Minimal imports for startup
 import os
 import time
 import sys
-import psycopg2
-
-# CRITICAL Environment Overrides for Local Ollama
-os.environ["OPENAI_API_KEY"] = "ollama"
-os.environ["OPENAI_API_BASE"] = "http://host.docker.internal:11434/v1"
-os.environ["OPENAI_MODEL_NAME"] = "llama3:latest"
 
 # Add path for relative imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from crewai import Agent, Task, Crew, Process
-from langchain_groq import ChatGroq
-from langchain.agents import Tool, initialize_agent, AgentType
-from langchain.memory import ConversationBufferMemory
-import os
-import json
-from langchain_community.tools import DuckDuckGoSearchRun
-from crewai.tools import BaseTool
-from db_tools import AddStockTool, CheckStockTool, ProcessBatchTool
 
-# --- CONFIGURATION (GROQ CLOUD) ---
-# We are now running on the cloud with Llama 3 70B (Senior Developer Level)
-llm = ChatGroq(
-    temperature=0,
-    model_name="llama-3.3-70b-versatile",
-    api_key=os.getenv("GROQ_API_KEY")
+# Valid Shim
+try:
+    from crewai_tools import BaseTool
+except ImportError:
+    try:
+        from langchain.tools import BaseTool
+    except ImportError:
+        # Fallback to heavy import only if necessary
+        from crewai.tools import BaseTool
+
+# --- LIGHTWEIGHT TOOL CLASSES ---
+from langchain_community.tools import DuckDuckGoSearchRun # This might be heavy? Let's hide it if possible, but BaseTool needs it? 
+# Actually BaseTool doesn't need DuckDuckGo. ScoutSearchTool needs it in _run.
+# We can import DuckDuckGo inside _run.
+
+class ScoutSearchTool(BaseTool):
+    name: str = "Market Search"
+    description: str = "Search the web for market prices."
+
+    def _run(self, query: str) -> str:
+        from langchain_community.tools import DuckDuckGoSearchRun
+        search = DuckDuckGoSearchRun()
+        return search.run(query)
+
+class RecordPriceTool(BaseTool):
+    name: str = "Record Market Price"
+    description: str = "Useful to save found market prices."
+
+    def _run(self, tool_input: str) -> str:
+        import psycopg2
+        try:
+            parts = tool_input.split('|')
+            if len(parts) != 4:
+                return "Error: Input must be 'Pulse Type|Location|Price|Recommendation'"
+            pulse, location, price, rec = [p.strip() for p in parts]
+            conn = psycopg2.connect(os.environ["DATABASE_URL"])
+            cur = conn.cursor()
+            cur.execute("INSERT INTO market_prices (pulse_type, location, price, recommendation) VALUES (%s, %s, %s, %s)", (pulse, location, price, rec))
+            conn.commit()
+            conn.close()
+            return "Successfully recorded price."
+        except Exception as e:
+            return f"Database Error: {e}"
+
+# Global DB Connection (Lazy)
+db_conn = None
+
+def get_db_connection():
+    global db_conn
+    import psycopg2
+    try:
+        if db_conn is None or db_conn.closed != 0:
+            db_conn = psycopg2.connect(os.environ["DATABASE_URL"])
+            with db_conn.cursor() as cur:
+                cur.execute("SELECT 1")
+    except Exception as e:
+        print(f"Reconnecting to DB failed: {e}")
+        db_conn = None 
+    return db_conn
+
+def process_command(command_text, crew_agent, crew_class, task_class, process_class):
+    print(f"COO Processing: {command_text}")
+    
+    # Fast-path for Health Checks
+    if command_text == "PING_HEALTH_CHECK" or command_text.startswith("AUDIT_TEST_PING"):
+        return f"PONG: {command_text} - Acknowledged."
+    
+    task = task_class(
+        description=f"Analyze command: '{command_text}'. Use tools to execute.",
+        expected_output="Action confirmation.",
+        agent=crew_agent
+    )
+    
+    crew = crew_class(
+        agents=[crew_agent],
+        tasks=[task],
+        process=process_class.sequential,
+        verbose=True
+    )
+    
+    return crew.kickoff()
+
+def main():
+    print("D Farms SUPER AGENT (COO) Starting... (Lazy Loading)")
+    
+    # --- HEAVY IMPORTS HERE ---
+    print("DEBUG: Importing dependencies...")
+    import psycopg2
+    import json
+    
+    from crewai import Agent, Task, Crew, Process
+    # Check if ChatOpenAI needs robust import? usually langchain_openai is fine
+    from langchain_openai import ChatOpenAI 
+
+    # Import other tools
+    from db_tools import AddStockTool, CheckStockTool, ProcessBatchTool
+    from analytics_tools import PricePredictionTool
+    from vision_tools import QualityGradingTool
+    from finance_tools import InvoiceGeneratorTool
+    from admin_tools import TotalCRMTool, ComplianceCheckTool
+    from document_tools import IngestDocumentTool, SearchMemoryTool
+    
+    print("DEBUG: Imports Done. Configuring Agent...")
+
+    # --- CONFIGURATION ---
+    GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+    
+    # LLM Init
+    llm = ChatOpenAI(
+        model="llama-3.3-70b-versatile",
+        openai_api_key=GROQ_API_KEY,
+        openai_api_base="https://api.groq.com/openai/v1",
+        temperature=0.1
+    )
+    
+    # Initialize Tools
+    all_tools = [
+        AddStockTool(), CheckStockTool(), ProcessBatchTool(), 
+        ScoutSearchTool(), RecordPriceTool(),
+        ProcessBatchTool(), PricePredictionTool(), QualityGradingTool(), InvoiceGeneratorTool(),
+        TotalCRMTool(), ComplianceCheckTool(), IngestDocumentTool(), SearchMemoryTool()
+    ]
+
+    # Super Agent Init
+    super_agent = Agent(
+        role='Business Operations Director',
+        goal='Manage operations.',
+        backstory="Executive leader.",
+        tools=all_tools,
+        verbose=True,
+        memory=False,
+        max_iter=5, 
+        llm=llm
+    )
+    
+    print("DEBUG: Agent Ready. Entering Loop...")
+    get_db_connection()
+    
+    while True:
+        # ... Loop logic same as before ... 
+        print(f"DEBUG: Start Loop {time.time()}")
+        try:
+             conn = get_db_connection()
+             if conn:
+                try:
+                    cur = conn.cursor()
+                    cur.execute("SELECT id, command FROM agent_jobs WHERE status = 'PENDING' ORDER BY created_at ASC LIMIT 1")
+                    row = cur.fetchone()
+                    
+                    if row:
+                        job_id, cmd = row
+                        print(f"DB Command Received: {cmd} (ID: {job_id})")
+                        cur.execute("UPDATE agent_jobs SET status = 'PROCESSING' WHERE id = %s", (job_id,))
+                        conn.commit()
+                        
+                        try:
+                            result = process_command(cmd, super_agent, Crew, Task, Process)
+                            cur.execute("UPDATE agent_jobs SET status = 'COMPLETED', result = %s, updated_at = NOW() WHERE id = %s", (str(result), job_id))
+                        except Exception as exec_err:
+                            print(f"Command Execution Error: {exec_err}")
+                            cur.execute("UPDATE agent_jobs SET status = 'FAILED', result = %s, updated_at = NOW() WHERE id = %s", (str(exec_err), job_id))
+                        conn.commit()
+                        print(f"Command {job_id} Finished.")
+                    cur.close()
+                except Exception as db_err:
+                    print(f"DB Polling Error: {db_err}")
+                    if conn.closed != 0: conn = None
+             
+             time.sleep(2)
+        except Exception as e:
+            print(f"Loop Error: {e}")
+            time.sleep(5)
+
+if __name__ == "__main__":
+    main()
+
+# --- CONFIGURATION (GROQ SHIM) ---
+# Fetch API Key from environment (set by systemd or user)
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+
+if not GROQ_API_KEY:
+    # Fallback or error - but for now just warn if missing
+    print("WARNING: GROQ_API_KEY not found in environment.")
+
+
+# Use ChatOpenAI to talk to Groq
+llm = ChatOpenAI(
+    model="llama-3.3-70b-versatile",
+    openai_api_key=GROQ_API_KEY,  # Correct param for langchain-openai 0.1.x
+    openai_api_base="https://api.groq.com/openai/v1", # Correct param for langchain-openai 0.1.x
+    temperature=0.1
 )
 
 # ---- Tools ----
@@ -68,7 +240,7 @@ class RecordPriceTool(BaseTool):
 # ---- Agent ----
 
 # Define LLM for agents
-llm_model = "ollama/llama3:latest"
+# llm_model = "ollama/llama3:latest"
 
 # Initialize Tools
 inventory_tools = [AddStockTool(), CheckStockTool(), ProcessBatchTool()]
@@ -109,15 +281,16 @@ super_agent = Agent(
     verbose=True,
     memory=False,
     allow_delegation=False,
-    function_calling_llm="ollama/llama3:latest"
+    max_iter=5, # PREVENT INFINITE LOOPS
+    llm=llm # Explicitly use the Gemini LLM
 )
 
 def process_command(command_text):
     print(f"COO Processing: {command_text}")
     
     # Fast-path for Health Checks
-    if command_text == "PING_HEALTH_CHECK":
-        return "PONG: COO Agent is Online."
+    if command_text == "PING_HEALTH_CHECK" or command_text.startswith("AUDIT_TEST_PING"):
+        return f"PONG: {command_text} - Acknowledged."
     
     
     # We define a flexible task that allows the agent to pick the right tool
@@ -149,49 +322,79 @@ def process_command(command_text):
     
     return crew.kickoff()
 
+
+# ... (Imports remain same)
+
+# Global DB Connection
+db_conn = None
+
+def get_db_connection():
+    global db_conn
+    try:
+        if db_conn is None or db_conn.closed != 0:
+            db_conn = psycopg2.connect(os.environ["DATABASE_URL"])
+            # Keep alive check
+            with db_conn.cursor() as cur:
+                cur.execute("SELECT 1")
+    except Exception as e:
+        print(f"Reconnecting to DB failed: {e}")
+        db_conn = None # Retry next time
+    return db_conn
+
 def main():
     print("D Farms SUPER AGENT (COO) Started...")
-    commands_file = "src/commands.txt"
-    logs_file = "src/logs.txt"
+    
+    # Initial Connection
+    get_db_connection()
+    
     while True:
+        print(f"DEBUG: Start Loop {time.time()}")
         try:
-            # 1. Internal Commands Loop (IPC)
-            internal_cmd_file = "/app/ipc/internal_command.json"
-            internal_res_file = "/app/ipc/internal_response.json"
-            
-            if os.path.exists(internal_cmd_file):
-                import json
+            # 1. Database Commands Loop (Polling)
+            conn = get_db_connection()
+            if conn:
                 try:
-                    with open(internal_cmd_file, 'r') as f:
-                        data = json.load(f)
+                    cur = conn.cursor()
                     
-                    cmd = data.get("command", "")
-                    if cmd:
-                        print(f"Internal Command Received: {cmd}")
-                        result = process_command(cmd)
+                    # Poll for PENDING jobs
+                    cur.execute("SELECT id, command FROM agent_jobs WHERE status = 'PENDING' ORDER BY created_at ASC LIMIT 1")
+                    row = cur.fetchone()
+                    
+                    if row:
+                        job_id, cmd = row
+                        print(f"DB Command Received: {cmd} (ID: {job_id})")
                         
-                        # Write Response
-                        with open(internal_res_file, 'w') as f:
-                            json.dump({"response": str(result)}, f)
+                        # Mark as PROCESSING
+                        cur.execute("UPDATE agent_jobs SET status = 'PROCESSING' WHERE id = %s", (job_id,))
+                        conn.commit()
                         
-                        print("Internal Response Sent.")
-                except Exception as e:
-                    print(f"Internal Loop Error: {e}")
-                    # Write Error Response
-                    with open(internal_res_file, 'w') as f:
-                         json.dump({"error": str(e)}, f)
+                        try:
+                            result = process_command(cmd)
+                            # Mark as COMPLETED
+                            cur.execute("UPDATE agent_jobs SET status = 'COMPLETED', result = %s, updated_at = NOW() WHERE id = %s", (str(result), job_id))
+                        except Exception as exec_err:
+                            print(f"Command Execution Error: {exec_err}")
+                            # Mark as FAILED
+                            cur.execute("UPDATE agent_jobs SET status = 'FAILED', result = %s, updated_at = NOW() WHERE id = %s", (str(exec_err), job_id))
+                        
+                        conn.commit()
+                        print(f"Command {job_id} Finished.")
+                    
+                    cur.close()
+                    # Do NOT close conn here
+                    
+                except Exception as db_err:
+                    print(f"DB Polling Error: {db_err}")
+                    # If error is connection related, force reconnect next loop
+                    if conn.closed != 0:
+                         conn = None
 
-                # Cleanup Request
-                try:
-                    os.remove(internal_cmd_file)
-                except:
-                    pass
-
-            # 2. Sales Bridge Loop
+            # 2. Sales Bridge Loop (Disk IO is cheap)
             sales_req_file = "/app/ipc/sales_query.json"
             sales_res_file = "/app/ipc/sales_response.json"
             
             if os.path.exists(sales_req_file):
+                print("DEBUG: Found Sales Request")
                 try:
                     import json
                     # Read Request
@@ -215,11 +418,11 @@ def main():
                     
                 except Exception as e:
                     print(f"Sales Loop Error: {e}")
-                    # Ensure we don't get stuck in a loop if file is bad
                     if os.path.exists(sales_req_file):
                          os.remove(sales_req_file)
 
-            time.sleep(1)
+            print("DEBUG: Sleeping...")
+            time.sleep(2) # Increased to 2s to reduce CPU load
         except Exception as e:
             print(f"Loop Error: {e}")
             time.sleep(5)

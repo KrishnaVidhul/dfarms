@@ -3,7 +3,13 @@ import os
 import psycopg2
 import numpy as np
 from sklearn.linear_model import LinearRegression
-from crewai.tools import BaseTool
+try:
+    from crewai.tools import BaseTool
+except ImportError:
+    try:
+        from crewai_tools import BaseTool
+    except ImportError:
+        from langchain.tools import BaseTool
 
 class PricePredictionTool(BaseTool):
     name: str = "Predict Price Trend"

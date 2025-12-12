@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Test</title>
+</head>
+<body>
+    <h1>Login API Test</h1>
+    <input type="text" id="username" placeholder="Username" value="admin">
+    <input type="password" id="password" placeholder="Password" value="admin123">
+    <button onclick="login()">Login</button>
+    <pre id="result"></pre>
+
+    <script>
+        async function login() {
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username: u, password: p})
+                });
+                const data = await res.json();
+                document.getElementById('result').innerText = JSON.stringify(data, null, 2);
+                if(data.success) {
+                    // Try to redirect manualy
+                    window.location.href = '/admin';
+                }
+            } catch(e) {
+                document.getElementById('result').innerText = 'Error: ' + e.message;
+            }
+        }
+    </script>
+</body>
+</html>

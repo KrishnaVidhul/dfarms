@@ -1,13 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Disable Turbopack for lower memory usage
-  experimental: {
-    turbo: undefined,
-  },
-  // Optimize for production
-  swcMinify: true,
+  output: "standalone",
+  // swcMinify is enabled by default in Next.js 13+
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
+    // removeConsole: process.env.NODE_ENV === "production", // Disabled for debugging
+  },
+  images: {
+    unoptimized: true,
+  },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
   },
 };
 

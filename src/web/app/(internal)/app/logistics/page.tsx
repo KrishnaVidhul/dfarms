@@ -2,13 +2,13 @@ import Link from 'next/link';
 
 export default function LogisticsPage() {
     return (
-        <main className="min-h-screen bg-gray-950 text-gray-100 p-8">
-            <header className="flex justify-between items-center mb-8 border-b border-gray-800 pb-6">
+        <div className="space-y-6">
+            <div className="flex justify-between items-center mb-8 border-b border-[#1F242C] pb-6">
                 <div>
                     <h1 className="text-3xl font-bold text-orange-500">Fleet & Logistics</h1>
-                    <p className="text-gray-400 mt-1">Real-time Vehicle Tracking & Route Optimization</p>
+                    <p className="text-zinc-400 mt-1">Real-time Vehicle Tracking & Route Optimization</p>
                 </div>
-            </header>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-gray-900 border border-gray-800 p-6 rounded-lg text-center py-20">
@@ -36,6 +36,6 @@ export default function LogisticsPage() {
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
     )
 }

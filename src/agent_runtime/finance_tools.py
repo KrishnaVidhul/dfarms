@@ -2,7 +2,13 @@
 import os
 import json
 import psycopg2
-from crewai.tools import BaseTool
+try:
+    from crewai.tools import BaseTool
+except ImportError:
+    try:
+        from crewai_tools import BaseTool
+    except ImportError:
+        from langchain.tools import BaseTool
 import uuid
 from datetime import datetime
 from reportlab.pdfgen import canvas

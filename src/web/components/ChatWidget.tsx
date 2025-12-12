@@ -56,9 +56,10 @@ export default function ChatWidget({ initialMessage = "Hi! I'm the D Farms Sales
             {!isOpen && (
                 <button
                     onClick={() => setIsOpen(true)}
-                    className="bg-teal-600 hover:bg-teal-500 text-white rounded-full p-4 shadow-lg transition-transform hover:scale-110 flex items-center gap-2"
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-full p-4 shadow-xl transition-transform hover:scale-105 flex items-center gap-2 border border-emerald-500/50"
+                    style={{ boxShadow: '0 0 20px rgba(16, 185, 129, 0.3)' }}
                 >
-                    <span className="font-semibold">Chat with Sales</span>
+                    <span className="font-bold">Chat with Agent</span>
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                     </svg>
@@ -86,8 +87,8 @@ export default function ChatWidget({ initialMessage = "Hi! I'm the D Farms Sales
                         {messages.map((msg, i) => (
                             <div key={i} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${msg.sender === 'user'
-                                        ? 'bg-teal-600 text-white rounded-br-none'
-                                        : 'bg-gray-700 text-gray-200 rounded-bl-none'
+                                    ? 'bg-teal-600 text-white rounded-br-none'
+                                    : 'bg-gray-700 text-gray-200 rounded-bl-none'
                                     }`}>
                                     {msg.text}
                                 </div>

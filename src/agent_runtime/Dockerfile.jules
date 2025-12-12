@@ -1,0 +1,23 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY src/agent_runtime/requirements_jules.txt .
+RUN pip install --no-cache-dir -U pip && \
+    pip install --no-cache-dir -r requirements_jules.txt
+
+# Copy source code
+COPY . .
+
+# Set Python path
+ENV PYTHONPATH=/app/src/agent_runtime
+
+CMD ["python", "-u", "src/agent_runtime/super_agent.py"]

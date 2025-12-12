@@ -78,7 +78,7 @@ def main():
     monitor.update_status("IDLE", "Initializing Autonomous Loop...")
     
     # 1. Initialize DB if needed
-    subprocess.run(["python", "src/scripts/init_roadmap.py"], check=False)
+    subprocess.run([sys.executable, "src/scripts/init_roadmap.py"], check=False)
     
     iteration = 0
     # max_iterations = 1 # REMOVED: Production Mode is Infinite
@@ -113,7 +113,7 @@ def main():
                 
                 try:
                     # Construct command
-                    cmd = ["python", "src/scripts/refactor_engine.py", "--feature", ticket]
+                    cmd = [sys.executable, "src/scripts/refactor_engine.py", "--feature", ticket]
                     if last_error:
                         cmd.extend(["--feedback", last_error])
                         
@@ -123,7 +123,7 @@ def main():
                     # Gatekeeper Check
                     monitor.update_status("VERIFYING", f"Running Gatekeeper (Attempt {attempt})...")
                     gatekeeper_res = subprocess.run(
-                        ["python", "src/scripts/gatekeeper.py", ticket], 
+                        [sys.executable, "src/scripts/gatekeeper.py", ticket], 
                         capture_output=True, text=True
                     )
                     
@@ -149,22 +149,22 @@ def main():
             monitor.update_status("IDLE", "No planned items found. Running Innovation Lab...")
             try:
                 # Perpetual Innovation: If empty, generate work
-                subprocess.run(["python", "src/scripts/gap_hunter.py"], check=False)
+                subprocess.run([sys.executable, "src/scripts/gap_hunter.py"], check=False)
                 # Check DB again immediately
                 ticket = get_next_ticket()
                 if not ticket:
-                     subprocess.run(["python", "src/scripts/innovation_lab.py"], check=False)
+                     subprocess.run([sys.executable, "src/scripts/innovation_lab.py"], check=False)
             except Exception as e:
                 if not ticket:
-                     subprocess.run(["python", "src/scripts/innovation_lab.py"], check=False)
+                     subprocess.run([sys.executable, "src/scripts/innovation_lab.py"], check=False)
             except Exception as e:
                 monitor.log(f"Innovation Lab failed: {e}")
         
         # Periodic Maintenance (Every 5 iterations ~ 30s)
         if iteration % 5 == 0:
             try:
-                subprocess.run(["python", "src/scripts/scout.py"], check=False)
-                subprocess.run(["python", "src/scripts/evolve_now.py"], check=False)
+                subprocess.run([sys.executable, "src/scripts/scout.py"], check=False)
+                subprocess.run([sys.executable, "src/scripts/evolve_now.py"], check=False)
             except:
                 pass
             

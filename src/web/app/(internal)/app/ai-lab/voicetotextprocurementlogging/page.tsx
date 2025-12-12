@@ -1,9 +1,9 @@
 // @ts-nocheck
+'use client';
+
 import { clsx } from 'clsx';
 import { Activity, Circle, User } from 'lucide-react';
 import { useState } from 'react';
-
-'use client';
 
 export default function Page() {
   const [procurementLogs, setProcurementLogs] = useState([
