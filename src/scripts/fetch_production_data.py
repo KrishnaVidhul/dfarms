@@ -72,7 +72,8 @@ def fetch_from_data_gov_api(limit=1000, offset=0):
             'api-key': API_KEY,
             'format': 'json',
             'limit': limit,
-            'offset': offset
+            'offset': offset,
+            'sort[Arrival_Date]': 'desc'  # Prioritize fresh data
         }
         
         response = requests.get(API_BASE_URL, params=params, timeout=60)
@@ -214,8 +215,8 @@ def main():
     logger.info("\n📊 Fetching from data.gov.in API...")
     
     offset = 0
-    limit = 1000
-    max_records = 10000  # Fetch up to 10,000 records
+    limit = 2000  # Increased batch size
+    max_records = 50000  # Increased total limit for full coverage
     
     while offset < max_records:
         records = fetch_from_data_gov_api(limit=limit, offset=offset)
