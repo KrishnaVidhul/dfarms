@@ -20,6 +20,7 @@ services:
     volumes:
       - ./src/web:/app
       - ./src/commands.txt:/app/commands.txt
+      # Shared IPC volume for agent communication
       - ./ipc:/app/ipc
     command: sh -c "if [ -f package.json ]; then npm install --production && npm start; else echo 'Waiting for Next.js init...'; tail -f /dev/null; fi"
     ports:
