@@ -6,11 +6,15 @@ Usage: python create_super_admin.py
 
 import os
 import psycopg2
-import hashlib
+import bcrypt
 
 def hash_password(password: str) -> str:
-    """Hash password using SHA256"""
-    return hashlib.sha256(password.encode()).hexdigest()
+    """Hash password using bcrypt"""
+    # bcrypt.hashpw requires bytes, and returns bytes
+    # We store the hash as a string in the DB
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+    return hashed.decode('utf-8')
 
 def create_super_admin():
     db_url = os.environ.get('DATABASE_URL')
@@ -50,6 +54,7 @@ def create_super_admin():
         print(f"  Username: {username}")
         print(f"  Password: {password}")
         print(f"  Role: {role}")
+        print(f"  Hash: {password_hash[:10]}...")
         
         cursor.close()
         conn.close()

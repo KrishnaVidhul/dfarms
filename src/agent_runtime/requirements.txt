@@ -19,3 +19,4 @@ requests
 watchdog
 gitpython
 langchain-groq
+bcrypt

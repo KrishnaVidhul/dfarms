@@ -246,14 +246,24 @@ def main():
     
     # Enforce 5-Day Retention Policy
     try:
+        # Re-establish connection/cursor for cleanup
+        if conn.closed:
+            conn = get_db_connection()
+
+        cur = conn.cursor()
         logger.info("🧹 Enforcing 5-Day Retention Policy...")
         cur.execute("DELETE FROM market_prices WHERE arrival_date < CURRENT_DATE - INTERVAL '5 days'")
         deleted_count = cur.rowcount
         conn.commit()
         logger.info(f"  ✓ Cleanup successful: {deleted_count} old records deleted.")
+        cur.close()
     except Exception as e:
         logger.error(f"  ✗ Retention cleanup failed: {e}")
-        conn.rollback()
+        if not conn.closed:
+            conn.rollback()
+
+    if not conn.closed:
+        conn.close()
 
     logger.info("="*60)
     

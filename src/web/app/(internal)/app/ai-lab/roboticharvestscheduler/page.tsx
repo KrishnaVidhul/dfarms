@@ -1,12 +1,19 @@
-// @ts-nocheck
 'use client';
 
 import { Activity } from 'lucide-react';
 import { useState } from 'react';
 import { clsx } from 'clsx';
 
+interface SchedulerData {
+  id: number;
+  robotName: string;
+  scheduledTime: string;
+  crop: string;
+  status: 'Scheduled' | 'In Progress' | 'Failed';
+}
+
 export default function Page() {
-  const [schedulerData, setSchedulerData] = useState([
+  const [schedulerData, setSchedulerData] = useState<SchedulerData[]>([
     {
       id: 1,
       robotName: 'Harvester-1',
@@ -40,26 +47,26 @@ export default function Page() {
         <table className="w-full text-white">
           <thead className="bg-gray-700">
             <tr>
-              <th className="py-3 px-4">Robot Name</th>
-              <th className="py-3 px-4">Scheduled Time</th>
-              <th className="py-3 px-4">Crop</th>
-              <th className="py-3 px-4">Status</th>
+              <th className="py-3 px-4 text-left">Robot Name</th>
+              <th className="py-3 px-4 text-left">Scheduled Time</th>
+              <th className="py-3 px-4 text-left">Crop</th>
+              <th className="py-3 px-4 text-left">Status</th>
             </tr>
           </thead>
           <tbody>
             {schedulerData.map((data) => (
               <tr
                 key={data.id}
-                className={clsx('py-3 px-4', {
-                  'bg-gray-700': data.status === 'Scheduled',
-                  'bg-green-600': data.status === 'In Progress',
-                  'bg-red-600': data.status === 'Failed',
+                className={clsx('border-b border-gray-700', {
+                  'bg-gray-700/50': data.status === 'Scheduled',
+                  'bg-green-600/50': data.status === 'In Progress',
+                  'bg-red-600/50': data.status === 'Failed',
                 })}
               >
-                <td>{data.robotName}</td>
-                <td>{new Date(data.scheduledTime).toLocaleString()}</td>
-                <td>{data.crop}</td>
-                <td>{data.status}</td>
+                <td className="py-3 px-4">{data.robotName}</td>
+                <td className="py-3 px-4">{new Date(data.scheduledTime).toLocaleString()}</td>
+                <td className="py-3 px-4">{data.crop}</td>
+                <td className="py-3 px-4">{data.status}</td>
               </tr>
             ))}
           </tbody>

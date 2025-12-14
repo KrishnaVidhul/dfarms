@@ -1,32 +1,19 @@
 import { NextResponse } from 'next/server';
-import { Pool } from 'pg';
-import crypto from 'crypto';
-
 import { pool } from '@/lib/db';
-
-function hash_password(password: string) {
-    return crypto.createHash('sha256').update(password).digest('hex');
-}
+import bcrypt from 'bcryptjs';
+import { signSession } from '@/lib/auth';
 
 export async function POST(request: Request) {
     try {
         const { username, password } = await request.json();
 
-        console.log(`Login attempt for: ${username} `);
+        console.log(`Login attempt for: ${username}`);
 
         if (!password) {
-            console.log('Login failed: Password missing');
             return NextResponse.json({ error: 'Missing credentials' }, { status: 400 });
         }
 
-        console.log('Login Debug: Connecting to DB...');
-        // Debug connection string (safe part)
-        console.log('DB URL Host:', process.env.DATABASE_URL?.split('@')[1]);
-
-        console.log('Login Debug: Connected. Querying user...');
-
         const res = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
-        console.log(`Login Debug: Query complete. Found ${res.rows.length} users.`);
 
         if (res.rows.length === 0) {
             console.log(`Login failed: User ${username} not found`);
@@ -34,27 +21,44 @@ export async function POST(request: Request) {
         }
 
         const user = res.rows[0];
-        const inputHash = hash_password(password);
 
-        if (inputHash !== user.password_hash) {
+        let isValid = false;
+        try {
+            isValid = await bcrypt.compare(password, user.password_hash);
+        } catch (err) {
+            console.error('Bcrypt comparison error:', err);
+        }
+
+        if (!isValid) {
             console.log(`Login failed: Invalid password for ${username}`);
             return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
         }
 
-        console.log(`Login success for: ${username}, role: ${user.role} `);
-        const response = NextResponse.json({ success: true, role: user.role });
+        console.log(`Login success for: ${username}, role: ${user.role}`);
 
+        // Generate JWT Session
+        const token = await signSession({
+            sub: user.id,
+            username: user.username,
+            role: user.role
+        });
+
+        const response = NextResponse.json({ success: true, role: user.role });
         const isProduction = process.env.NODE_ENV === 'production';
 
+        // Set Secure HTTP-Only Cookie
         response.cookies.set({
-            name: 'auth_role',
-            value: user.role,
+            name: 'session', // Standard name
+            value: token,
             httpOnly: true,
             path: '/',
             secure: isProduction,
             sameSite: 'lax',
-            maxAge: 60 * 60 * 24,
+            maxAge: 60 * 60 * 24, // 24 hours
         });
+
+        // Clean up legacy insecurity if it exists
+        response.cookies.delete('auth_role');
 
         return response;
 
