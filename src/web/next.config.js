@@ -3,7 +3,7 @@ const nextConfig = {
   output: "standalone",
   // swcMinify is enabled by default in Next.js 13+
   compiler: {
-    // removeConsole: process.env.NODE_ENV === "production", // Disabled for debugging
+    removeConsole: process.env.NODE_ENV === "production",
   },
   images: {
     unoptimized: true,
