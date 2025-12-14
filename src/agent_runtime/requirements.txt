@@ -20,3 +20,4 @@ watchdog
 gitpython
 langchain-groq
 bcrypt
+psycopg2-binary
