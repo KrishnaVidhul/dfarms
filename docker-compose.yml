@@ -20,7 +20,7 @@ services:
     volumes:
       - ./src/web:/app
       - ./src/commands.txt:/app/commands.txt
-      - ./ipc:/app/ipc
+      - ./ipc:/app/ipc # Shared IPC volume
     command: sh -c "if [ -f package.json ]; then npm install --production && npm start; else echo 'Waiting for Next.js init...'; tail -f /dev/null; fi"
     ports:
       - "3000:3000"
@@ -51,7 +51,7 @@ services:
     working_dir: /app
     volumes:
       - .:/app
-      - ./ipc:/app/ipc
+      - ./ipc:/app/ipc # Shared IPC volume
       - ${HOME}/.ssh:/root/.ssh:ro
       - /var/run/docker.sock:/var/run/docker.sock
     command: python -u src/agent_runtime/super_agent.py
