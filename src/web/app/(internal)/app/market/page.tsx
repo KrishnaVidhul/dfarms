@@ -6,6 +6,11 @@ import PriceTrendChart from '@/components/market/PriceTrendChart';
 import AIInsights from '@/components/market/AIInsights';
 import { TrendingUp, TrendingDown, Download, RefreshCw } from 'lucide-react';
 
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
+
 export default function MarketPage() {
     const [filters, setFilters] = useState<FilterState>({
         commodity: '',
@@ -47,14 +52,6 @@ export default function MarketPage() {
 
             const res = await fetch(`/api/market?${params}`);
             const data = await res.json();
-            console.log('Market Data API Response:', {
-                count: data.prices?.length,
-                first5Dates: data.prices?.slice(0, 5).map((p: any) => ({
-                    commodity: p.commodity,
-                    market: p.market_name,
-                    date: p.arrival_date
-                }))
-            });
             setMarketData(data.prices || []);
         } catch (err) {
             console.error('Error fetching market data:', err);
@@ -130,9 +127,9 @@ export default function MarketPage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-12">
             {/* Header */}
-            <div className="flex justify-between items-end pb-6 border-b border-[#1F242C]">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b border-zinc-800">
                 <div>
                     <h1 className="text-2xl font-bold text-white">Market Intelligence</h1>
                     <p className="text-zinc-400 text-sm mt-1">
@@ -140,42 +137,43 @@ export default function MarketPage() {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <button
-                        onClick={fetchMarketData}
-                        className="flex items-center gap-2 bg-[#161B22] border border-[#1F242C] text-zinc-300 px-4 py-2 rounded-lg text-sm hover:bg-[#1F242C] transition-colors"
-                    >
+                    <Button variant="outline" onClick={fetchMarketData} className="gap-2">
                         <RefreshCw size={16} />
                         Refresh
-                    </button>
-                    <button
-                        onClick={exportToCSV}
-                        disabled={marketData.length === 0}
-                        className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm transition-colors"
-                    >
+                    </Button>
+                    <Button variant="default" onClick={exportToCSV} disabled={marketData.length === 0} className="gap-2">
                         <Download size={16} />
                         Export CSV
-                    </button>
+                    </Button>
                 </div>
             </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-[#161B22] border border-[#1F242C] rounded-xl p-4">
-                    <p className="text-xs text-zinc-500 uppercase tracking-wider">Total Commodities</p>
-                    <p className="text-2xl font-bold text-white mt-2">{stats.total_commodities || 0}</p>
-                </div>
-                <div className="bg-[#161B22] border border-[#1F242C] rounded-xl p-4">
-                    <p className="text-xs text-zinc-500 uppercase tracking-wider">States Covered</p>
-                    <p className="text-2xl font-bold text-white mt-2">{stats.total_states || 0}</p>
-                </div>
-                <div className="bg-[#161B22] border border-[#1F242C] rounded-xl p-4">
-                    <p className="text-xs text-zinc-500 uppercase tracking-wider">Total Markets</p>
-                    <p className="text-2xl font-bold text-white mt-2">{stats.total_markets || 0}</p>
-                </div>
-                <div className="bg-[#161B22] border border-[#1F242C] rounded-xl p-4">
-                    <p className="text-xs text-zinc-500 uppercase tracking-wider">Records Loaded</p>
-                    <p className="text-2xl font-bold text-emerald-400 mt-2">{marketData.length}</p>
-                </div>
+                <Card className="bg-zinc-900 border-zinc-800">
+                    <CardContent className="p-6">
+                        <p className="text-xs text-zinc-500 uppercase tracking-wider font-semibold">Total Commodities</p>
+                        <p className="text-2xl font-bold text-white mt-2">{stats.total_commodities || 0}</p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-zinc-900 border-zinc-800">
+                    <CardContent className="p-6">
+                        <p className="text-xs text-zinc-500 uppercase tracking-wider font-semibold">States Covered</p>
+                        <p className="text-2xl font-bold text-white mt-2">{stats.total_states || 0}</p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-zinc-900 border-zinc-800">
+                    <CardContent className="p-6">
+                        <p className="text-xs text-zinc-500 uppercase tracking-wider font-semibold">Total Markets</p>
+                        <p className="text-2xl font-bold text-white mt-2">{stats.total_markets || 0}</p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-zinc-900 border-zinc-800">
+                    <CardContent className="p-6">
+                        <p className="text-xs text-zinc-500 uppercase tracking-wider font-semibold">Records Loaded</p>
+                        <p className="text-2xl font-bold text-emerald-400 mt-2">{marketData.length}</p>
+                    </CardContent>
+                </Card>
             </div>
 
             {/* Filters */}
@@ -192,66 +190,66 @@ export default function MarketPage() {
             )}
 
             {/* Data Table */}
-            <div className="bg-[#161B22] border border-[#1F242C] rounded-xl overflow-hidden">
-                <div className="p-4 border-b border-[#1F242C]">
-                    <h3 className="text-sm font-semibold text-gray-200">Market Data</h3>
-                    <p className="text-xs text-zinc-500 mt-1">
+            <Card className="bg-zinc-900 border-zinc-800 overflow-hidden">
+                <CardHeader className="border-b border-zinc-800 pb-4">
+                    <CardTitle className="text-base text-zinc-200">Market Data</CardTitle>
+                    <CardDescription>
                         {loading ? 'Loading...' : `Showing ${marketData.length} records`}
-                    </p>
-                </div>
+                    </CardDescription>
+                </CardHeader>
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="bg-[#0d1117] text-zinc-500 text-xs uppercase font-medium">
-                            <tr>
-                                <th className="px-4 py-3">Commodity</th>
-                                <th className="px-4 py-3">State</th>
-                                <th className="px-4 py-3">Market</th>
-                                <th className="px-4 py-3">Variety</th>
-                                <th className="px-4 py-3 text-right">Min Price</th>
-                                <th className="px-4 py-3 text-right">Modal Price</th>
-                                <th className="px-4 py-3 text-right">Max Price</th>
-                                <th className="px-4 py-3">Date</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#1F242C]">
+                    <Table>
+                        <TableHeader className="bg-zinc-950/50">
+                            <TableRow className="border-zinc-800 hover:bg-transparent">
+                                <TableHead className="text-zinc-500">Commodity</TableHead>
+                                <TableHead className="text-zinc-500">State</TableHead>
+                                <TableHead className="text-zinc-500">Market</TableHead>
+                                <TableHead className="text-zinc-500">Variety</TableHead>
+                                <TableHead className="text-zinc-500 text-right">Min Price</TableHead>
+                                <TableHead className="text-zinc-500 text-right">Modal Price</TableHead>
+                                <TableHead className="text-zinc-500 text-right">Max Price</TableHead>
+                                <TableHead className="text-zinc-500">Date</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {loading ? (
-                                <tr>
-                                    <td colSpan={8} className="px-4 py-8 text-center text-zinc-500 text-sm">
+                                <TableRow>
+                                    <TableCell colSpan={8} className="h-24 text-center text-zinc-500">
                                         Loading market data...
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ) : marketData.length === 0 ? (
-                                <tr>
-                                    <td colSpan={8} className="px-4 py-8 text-center text-zinc-500 text-sm">
-                                        No data available. Try adjusting your filters or run the data fetcher script.
-                                    </td>
-                                </tr>
+                                <TableRow>
+                                    <TableCell colSpan={8} className="h-24 text-center text-zinc-500">
+                                        No data available. Try adjusting your filters.
+                                    </TableCell>
+                                </TableRow>
                             ) : (
                                 marketData.map((item, idx) => (
-                                    <tr key={idx} className="hover:bg-[#1F242C]/50 transition-colors">
-                                        <td className="px-4 py-3 text-sm text-gray-200 font-medium">{item.commodity}</td>
-                                        <td className="px-4 py-3 text-sm text-zinc-400">{item.state}</td>
-                                        <td className="px-4 py-3 text-sm text-zinc-400">{item.market_name}</td>
-                                        <td className="px-4 py-3 text-sm text-zinc-500">{item.variety || '-'}</td>
-                                        <td className="px-4 py-3 text-sm text-blue-400 text-right font-mono">
+                                    <TableRow key={idx} className="border-zinc-800 hover:bg-zinc-800/30 transition-colors">
+                                        <TableCell className="font-medium text-zinc-200">{item.commodity}</TableCell>
+                                        <TableCell className="text-zinc-400">{item.state}</TableCell>
+                                        <TableCell className="text-zinc-400">{item.market_name}</TableCell>
+                                        <TableCell className="text-zinc-500">{item.variety || '-'}</TableCell>
+                                        <TableCell className="text-right font-mono text-blue-400">
                                             {item.min_price ? `₹${parseFloat(item.min_price).toFixed(2)}` : '-'}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-emerald-400 text-right font-mono font-semibold">
+                                        </TableCell>
+                                        <TableCell className="text-right font-mono font-semibold text-emerald-400">
                                             {item.modal_price ? `₹${parseFloat(item.modal_price).toFixed(2)}` : '-'}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-amber-400 text-right font-mono">
+                                        </TableCell>
+                                        <TableCell className="text-right font-mono text-amber-400">
                                             {item.max_price ? `₹${parseFloat(item.max_price).toFixed(2)}` : '-'}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-zinc-500">
+                                        </TableCell>
+                                        <TableCell className="text-zinc-500">
                                             {item.arrival_date ? new Date(item.arrival_date).toLocaleDateString('en-IN', { timeZone: 'UTC' }) : '-'}
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                    </TableRow>
                                 ))
                             )}
-                        </tbody>
-                    </table>
+                        </TableBody>
+                    </Table>
                 </div>
-            </div>
+            </Card>
         </div>
     );
 }
