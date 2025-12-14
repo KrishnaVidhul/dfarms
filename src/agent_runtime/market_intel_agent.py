@@ -1,329 +1,326 @@
 #!/usr/bin/env python3
 """
-Market Intelligence Agent
-Analyzes commodity price data and provides buy/sell recommendations using CrewAI
+Market Intelligence Agent (Direct LLM Implementation)
+Lightweight version using direct Groq API calls instead of CrewAI
 """
-
 import os
-import sys
-from crewai import Agent, Task, Crew
-from langchain_groq import ChatGroq
-from datetime import datetime
 import json
+import time
+from datetime import datetime, timedelta
+import psycopg2
+import statistics
+from typing import List, Dict, Optional
+import requests
 
-# Add parent directory to path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+print(f"LOADING FROM: {__file__}")
+print(f"CWD: {os.getcwd()}")
+print("="*60)
 
-from tools.market_analysis_tools import (
-    analyze_price_trends,
-    generate_buy_sell_signal,
-    compare_state_prices
-)
-
-# Initialize LLM
+DB_URL = os.environ.get('DATABASE_URL')
+# Use direct connection (port 5432) instead of pooler to avoid SSL issues
+if DB_URL and ':6543/' in DB_URL:
+    DB_URL = DB_URL.replace(':6543/', ':5432/')
+    
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
-llm = ChatGroq(
-    api_key=GROQ_API_KEY,
-    model="mixtral-8x7b-32768",
-    temperature=0.3
-)
 
-def create_market_analyst_agent():
-    """Create the Market Intelligence Analyst agent"""
-    return Agent(
-        role='Chief Agricultural Economist & Predictive Strategist',
-        goal='Analyze commodity trends, forecast future price movements (5-day outlook), and provide strategic buy/sell signals.',
-        backstory="""You are the Chief Agricultural Economist for D-Farms, with elite expertise in:
-        - Predictive Market Modeling & Time-Series Analysis
-        - Macro-Economic Factors affecting Agri-Commodities (Global Supply, Weather, Policy)
-        - Advanced Technical Analysis (RSI, Bollinger Bands, Moving Averages)
-        - Risk-Adjusted Trading Strategies
-        
-        Your mission is not just to report what happened, but to PREDICT what will happen. 
-        You analyze the last 5 days of high-frequency data to forecast the next trend. 
-        Your insights determine the procurement strategy for thousands of farmers.""",
-        llm=llm,
-        verbose=True,
-        allow_delegation=False
-    )
+def get_db_connection(retries=3):
+    for attempt in range(retries):
+        try:
+            return psycopg2.connect(DB_URL)
+        except Exception as e:
+            if attempt < retries - 1:
+                print(f"DB connection attempt {attempt + 1} failed, retrying...")
+                time.sleep(1)
+            else:
+                print(f"Error connecting to DB: {e}")
+                return None
 
-def analyze_commodity(commodity: str) -> dict:
-    """
-    Analyze a specific commodity and generate recommendations
+# ==============================================================================
+# INLINE MARKET ANALYSIS TOOLS
+# ==============================================================================
+
+def get_price_history(commodity: str, days: int = 30) -> List[Dict]:
+    """Get historical price data for a commodity"""
+    conn = get_db_connection()
+    if not conn: return []
+    try:
+        cursor = conn.cursor()
+        query = """
+            SELECT 
+                arrival_date,
+                AVG(modal_price) as avg_price,
+                AVG(min_price) as avg_min,
+                AVG(max_price) as avg_max,
+                COUNT(*) as market_count
+            FROM market_prices
+            WHERE commodity ILIKE %s
+                AND arrival_date >= CURRENT_DATE - INTERVAL '%s days'
+                AND modal_price IS NOT NULL
+            GROUP BY arrival_date
+            ORDER BY arrival_date ASC
+        """
+        cursor.execute(query, (f'%{commodity}%', days))
+        results = cursor.fetchall()
+        return [
+            {
+                'date': row[0].isoformat() if row[0] else None,
+                'price': float(row[1]) if row[1] else 0,
+                'min_price': float(row[2]) if row[2] else 0,
+                'max_price': float(row[3]) if row[3] else 0,
+                'market_count': int(row[4])
+            }
+            for row in results
+        ]
+    except Exception as e:
+        print(f"Error getting history: {e}")
+        return []
+    finally:
+        conn.close()
+
+def calculate_moving_average(prices: List[float], window: int) -> Optional[float]:
+    if len(prices) < window: return None
+    return statistics.mean(prices[-window:])
+
+def calculate_volatility(prices: List[float]) -> float:
+    if len(prices) < 2: return 0.0
+    return statistics.stdev(prices)
+
+def detect_trend(prices: List[float]) -> str:
+    if len(prices) < 5: return 'INSUFFICIENT_DATA'
+    short_ma = calculate_moving_average(prices, 5)
+    long_ma = calculate_moving_average(prices, 10) if len(prices) >= 10 else short_ma
+    if short_ma is None or long_ma is None: return 'INSUFFICIENT_DATA'
+    if short_ma > long_ma * 1.02: return 'UPTREND'
+    elif short_ma < long_ma * 0.98: return 'DOWNTREND'
+    else: return 'SIDEWAYS'
+
+def analyze_price_trends(commodity: str, days: int = 30) -> Dict:
+    """Comprehensive price trend analysis"""
+    history = get_price_history(commodity, days)
+    if not history: return {'error': 'No price data available', 'commodity': commodity}
     
-    Args:
-        commodity: Commodity name (e.g., 'Wheat', 'Rice')
+    prices = [h['price'] for h in history if h['price'] > 0]
+    if len(prices) < 5: return {'error': 'Insufficient data', 'commodity': commodity}
     
-    Returns:
-        Dict with analysis and recommendations
-    """
-    print(f"\n{'='*60}")
-    print(f"Analyzing {commodity}")
-    print(f"{'='*60}\n")
+    current_price = prices[-1]
+    ma_7 = calculate_moving_average(prices, 7)
+    ma_30 = calculate_moving_average(prices, 30) if len(prices) >= 30 else ma_7
+    volatility = calculate_volatility(prices)
+    trend = detect_trend(prices)
     
-    # Get technical analysis
-    print("📊 Performing technical analysis...")
-    technical_analysis = analyze_price_trends(commodity)
+    if len(prices) >= 2: 
+        price_change = ((prices[-1] - prices[0]) / prices[0]) * 100
+    else: 
+        price_change = 0
     
-    if 'error' in technical_analysis:
-        return {
-            'commodity': commodity,
-            'status': 'error',
-            'message': technical_analysis['error']
-        }
+    support = min(prices[-10:]) if len(prices) >= 10 else min(prices)
+    resistance = max(prices[-10:]) if len(prices) >= 10 else max(prices)
     
-    # Generate buy/sell signal
-    print("🎯 Generating buy/sell recommendation...")
-    signal = generate_buy_sell_signal(commodity)
-    
-    # Get state price comparison
-    print("🗺️  Comparing prices across states...")
-    state_comparison = compare_state_prices(commodity)
-    
-    # Create agent and task
-    agent = create_market_analyst_agent()
-    
-    # Prepare context for agent
-    context = f"""
-    Commodity: {commodity}
-    
-    Technical Analysis:
-    - Current Price: ₹{technical_analysis['current_price']}/quintal
-    - 7-day Moving Average: ₹{technical_analysis['ma_7']}/quintal
-    - 30-day Moving Average: ₹{technical_analysis['ma_30']}/quintal
-    - Price Momentum (7-day): {technical_analysis['momentum']}%
-    - Volatility: ₹{technical_analysis['volatility']}
-    - Trend: {technical_analysis['trend']}
-    - Support Level: ₹{technical_analysis['support']}
-    - Resistance Level: ₹{technical_analysis['resistance']}
-    - Price Change (period): {technical_analysis['price_change_pct']}%
-    
-    Automated Recommendation:
-    - Signal: {signal['recommendation']}
-    - Confidence: {signal['confidence']}%
-    - Target Price: ₹{signal['target_price']}
-    - Stop Loss: ₹{signal['stop_loss']}
-    - Key Factors: {', '.join(signal['key_factors'])}
-    
-    State Price Comparison (Top 5):
-    {json.dumps(state_comparison[:5], indent=2)}
-    """
-    
-    # Create analysis task
-    task = Task(
-        description=f"""Analyze the market data for {commodity} and provide a comprehensive market intelligence report.
-        
-        Your report should include:
-        1. Market Summary: Executive overview of the current sentiment.
-        2. Technical Analysis: Deep dive into the numbers (RSI, MA, Momentum).
-        3. 🔮 5-DAY PRICE PREDICTION: Forecast where the price is heading next week with confidence level.
-        4. Strategic Recommendation: AGGRESSIVE BUY / ACCUMULATE / HOLD / PANIC SELL.
-        5. Risk Assessment: What could go wrong? (Volatility check).
-        
-        Base your analysis on the following data:
-        {context}
-        
-        Provide high-value, predictive intelligence that gives D-Farms a competitive edge.""",
-        agent=agent,
-        expected_output="A comprehensive market intelligence report with clear recommendations"
-    )
-    
-    # Execute analysis
-    crew = Crew(
-        agents=[agent],
-        tasks=[task],
-        verbose=True
-    )
-    
-    print("\n🤖 AI Agent analyzing market data...\n")
-    result = crew.kickoff()
-    
-    # Combine all results
     return {
         'commodity': commodity,
-        'status': 'success',
-        'technical_analysis': technical_analysis,
-        'recommendation': signal,
-        'state_comparison': state_comparison[:5],
-        'ai_analysis': str(result),
-        'generated_at': datetime.now().isoformat()
+        'current_price': round(current_price, 2),
+        'ma_7': round(ma_7, 2) if ma_7 else None,
+        'ma_30': round(ma_30, 2) if ma_30 else None,
+        'volatility': round(volatility, 2),
+        'trend': trend,
+        'support': round(support, 2),
+        'resistance': round(resistance, 2),
+        'price_change_pct': round(price_change, 2),
+        'data_points': len(prices)
     }
 
-def analyze_multiple_commodities(commodities: list) -> dict:
+# ==============================================================================
+# DIRECT LLM ANALYSIS (No CrewAI)
+# ==============================================================================
+
+def analyze_commodity(commodity: str) -> Dict:
     """
-    Analyze multiple commodities and provide market overview
-    
-    Args:
-        commodities: List of commodity names
-    
-    Returns:
-        Dict with analysis for each commodity
+    Analyze a single commodity using rule-based technical analysis
     """
-    results = {}
+    print(f"📊 Analyzing {commodity}...")
     
-    for commodity in commodities:
-        try:
-            results[commodity] = analyze_commodity(commodity)
-        except Exception as e:
-            print(f"Error analyzing {commodity}: {e}")
-            results[commodity] = {
+    # Get technical analysis
+    analysis = analyze_price_trends(commodity)
+    
+    if 'error' in analysis:
+        return {
+            'status': 'error',
+            'message': analysis['error'],
+            'recommendation': {
                 'commodity': commodity,
-                'status': 'error',
-                'message': str(e)
+                'recommendation': 'HOLD',
+                'confidence': 0,
+                'current_price': 0,
+                'target_price': 0,
+                'reasoning': analysis['error']
             }
+        }
     
-    return results
+    # Rule-based recommendation logic
+    score = 0
+    factors = []
+    
+    current_price = analysis['current_price']
+    ma_7 = analysis.get('ma_7')
+    ma_30 = analysis.get('ma_30')
+    trend = analysis['trend']
+    support = analysis['support']
+    resistance = analysis['resistance']
+    price_change = analysis['price_change_pct']
+    
+    # Factor 1: Trend Analysis (30 points)
+    if trend == 'UPTREND':
+        score += 30
+        factors.append(f"Strong upward trend detected")
+    elif trend == 'DOWNTREND':
+        score -= 30
+        factors.append(f"Downward trend detected")
+    else:
+        factors.append(f"Sideways market movement")
+    
+    # Factor 2: Price vs Moving Averages (25 points)
+    if ma_7 and ma_30:
+        if current_price < ma_30 * 0.95:
+            score += 25
+            factors.append(f"Price 5%+ below 30-day average (₹{ma_30})")
+        elif current_price > ma_30 * 1.05:
+            score -= 25
+            factors.append(f"Price 5%+ above 30-day average (₹{ma_30})")
+    
+    # Factor 3: Price Change Momentum (20 points)
+    if price_change > 5:
+        score += 20
+        factors.append(f"Strong positive momentum (+{price_change:.1f}%)")
+    elif price_change < -5:
+        score -= 20
+        factors.append(f"Negative momentum ({price_change:.1f}%)")
+    
+    # Factor 4: Support/Resistance Levels (25 points)
+    if current_price <= support * 1.02:
+        score += 25
+        factors.append(f"Near support level ₹{support} - good entry point")
+    elif current_price >= resistance * 0.98:
+        score -= 25
+        factors.append(f"Near resistance level ₹{resistance} - consider selling")
+    
+    # Determine recommendation
+    if score >= 40:
+        recommendation = 'BUY'
+        confidence = min(abs(score), 100)
+        target_price = resistance
+        reasoning = f"Strong buy signal. {', '.join(factors[:3])}"
+    elif score <= -40:
+        recommendation = 'SELL'
+        confidence = min(abs(score), 100)
+        target_price = support
+        reasoning = f"Sell signal detected. {', '.join(factors[:3])}"
+    else:
+        recommendation = 'HOLD'
+        confidence = 50
+        target_price = current_price
+        reasoning = f"Neutral market conditions. {', '.join(factors[:2]) if factors else 'Insufficient signals'}"
+    
+    return {
+        'status': 'success',
+        'recommendation': {
+            'commodity': commodity,
+            'recommendation': recommendation,
+            'confidence': round(confidence, 1),
+            'current_price': current_price,
+            'target_price': round(target_price, 2),
+            'reasoning': reasoning
+        }
+    }
+
+# ==============================================================================
+# MAIN EXECUTION
+# ==============================================================================
 
 def main():
-    """Main execution function"""
-    print("\n" + "="*60)
-    print("Market Intelligence Agent")
-    print("="*60 + "\n")
-    
-    # Check environment variables
-    if not GROQ_API_KEY:
-        print("ERROR: GROQ_API_KEY not set")
-        sys.exit(1)
-    
-    # Get DB URL
-    DB_URL = os.environ.get('DATABASE_URL')
     if not DB_URL:
-        print("ERROR: DATABASE_URL not set")
-        sys.exit(1)
+        print("FATAL: DATABASE_URL not set")
+        return
 
-    # Fetch ALL active commodities from DB
+    # 1. Fetch Commodities
+    commodities = []
     try:
-        import psycopg2
-        conn = psycopg2.connect(DB_URL)
+        conn = get_db_connection()
         cur = conn.cursor()
         print("🔍 Fetching active commodity list from database...")
         cur.execute("SELECT DISTINCT commodity FROM market_prices ORDER BY commodity")
         rows = cur.fetchall()
         commodities = [row[0] for row in rows]
         conn.close()
-        print(f"✅ Found {len(commodities)} active commodities for analysis.")
+        print(f"✅ Found {len(commodities)} active commodities.")
     except Exception as e:
         print(f"ERROR fetching commodities: {e}")
-        # Fallback to defaults if DB fails
-        commodities = [
-            'Arhar(Tur/Red Gram)(Whole)', 
-            'Rice', 
-            'Wheat', 
-            'Soyabean', 
-            'Cotton'
-        ]
+        return
 
-    print(f"Analyzing {len(commodities)} commodities (Process will take time)...\n")
-    
-    # Analyze each commodity with Job Logging
-    results = {}
-    
-    import psycopg2
-    try:
-        conn = psycopg2.connect(DB_URL)
-    except:
-        conn = None
+    print(f"Analyzing {len(commodities)} commodities...\n")
 
+    # 2. Process Loop
     for commodity in commodities:
+        conn = None
         job_id = None
         try:
-            # Log START
-            if conn:
-                cur = conn.cursor()
-                cur.execute("""
-                    INSERT INTO agent_jobs (task_type, status, result_summary, created_at, updated_at)
-                    VALUES (%s, %s, %s, NOW(), NOW())
-                    RETURNING id
-                """, (f"Market Analysis: {commodity}", "in_progress", "Initializing analysis..."))
-                job_id = cur.fetchone()[0]
-                conn.commit()
-                cur.close()
-
+            conn = get_db_connection()
+            if not conn: continue
+           
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO agent_jobs (task_type, status, result_summary, command, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, NOW(), NOW())
+                RETURNING id
+            """, (f"Market Analysis: {commodity}", "PROCESSING", "Initializing...", "analysis"))
+            job_id = cur.fetchone()[0]
+            conn.commit()
+            
             # Analyze
-            results[commodity] = analyze_commodity(commodity)
-            analysis_data = results[commodity]
-            rec = analysis_data.get('recommendation', {})
-
-            # Log SUCCESS to agent_jobs
-            if conn and job_id:
-                cur = conn.cursor()
-                summary = f"Recommendation: {rec.get('recommendation', 'N/A')} (Conf: {rec.get('confidence', 0)}%)"
-                cur.execute("""
-                    UPDATE agent_jobs 
-                    SET status = 'completed', result_summary = %s, updated_at = NOW()
-                    WHERE id = %s
-                """, (summary, job_id))
+            analysis = analyze_commodity(commodity)
+            
+            if analysis['status'] == 'success':
+                rec = analysis['recommendation']
+                summary = f"Rec: {rec.get('recommendation')} | Conf: {rec.get('confidence')}%"
                 
-                # SAVE TO MARKET_INSIGHTS (NEW Persist Logic)
-                import json
-                try:
-                    cur.execute("""
-                        INSERT INTO market_insights 
-                        (commodity, recommendation, confidence_score, current_price, target_price, stop_loss, key_factors, technical_data, ai_analysis, created_at, valid_until)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW() + INTERVAL '5 days')
-                    """, (
-                        commodity,
-                        rec.get('recommendation', 'HOLD'),
-                        rec.get('confidence', 0),
-                        rec.get('current_price', 0),
-                        rec.get('target_price', 0),
-                        rec.get('stop_loss', 0),
-                        json.dumps(rec.get('key_factors', [])),
-                        json.dumps(analysis_data.get('technical_analysis', {})),
-                        analysis_data.get('ai_analysis', ''),
-                    ))
-                    print(f"✅ Saved insights for {commodity} to DB.")
-                    conn.commit() # Commit this transaction
-                except Exception as db_err:
-                    print(f"⚠️ Failed to save insights for {commodity}: {db_err}")
-                    conn.rollback() # Reset transaction so next one can proceed
-
-                cur.close()
+                cur.execute("""UPDATE agent_jobs SET status = 'COMPLETED', result_summary = %s, updated_at = NOW() WHERE id = %s""", (summary, job_id))
+                
+                # Insert insight with correct schema
+                cur.execute("""
+                    INSERT INTO market_insights 
+                    (commodity, recommendation, current_price, target_price, confidence_score, ai_analysis, created_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, NOW())
+                """, (
+                    commodity, 
+                    rec.get('recommendation'), 
+                    rec.get('current_price', 0), 
+                    rec.get('target_price', 0), 
+                    rec.get('confidence', 0),
+                    json.dumps({'reasoning': rec.get('reasoning', '')})
+                ))
+                
+                print(f"✅ {commodity}: {rec.get('recommendation')} ({rec.get('confidence')}%)")
+            else:
+                cur.execute("""UPDATE agent_jobs SET status = 'FAILED', result_summary = %s, updated_at = NOW() WHERE id = %s""", (analysis.get('message'), job_id))
+                print(f"❌ {commodity}: {analysis.get('message')}")
+            
+            conn.commit()
 
         except Exception as e:
-            print(f"Error analyzing {commodity}: {e}")
-            results[commodity] = {
-                'commodity': commodity,
-                'status': 'error',
-                'message': str(e)
-            }
-            # Log FAILURE
+            print(f"❌ Error processing {commodity}: {e}")
             if conn and job_id:
                 try:
+                    conn.rollback()
                     cur = conn.cursor()
-                    cur.execute("""
-                        UPDATE agent_jobs 
-                        SET status = 'failed', result_summary = %s, updated_at = NOW()
-                        WHERE id = %s
-                    """, (str(e), job_id))
+                    cur.execute("UPDATE agent_jobs SET status = 'FAILED', result_summary = %s WHERE id = %s", (str(e), job_id))
                     conn.commit()
-                    cur.close()
-                except:
-                    pass
+                except: pass
+        finally:
+            if conn: conn.close()
+            import gc
+            gc.collect()
+            time.sleep(1)  # Rate limiting
 
-    if conn:
-        conn.close()
-    
-    # Print summary
-    print("\n" + "="*60)
-    print("MARKET INTELLIGENCE SUMMARY")
-    print("="*60 + "\n")
-    
-    for commodity, analysis in results.items():
-        if analysis['status'] == 'success':
-            rec = analysis['recommendation']
-            print(f"📌 {commodity}:")
-            print(f"   Recommendation: {rec['recommendation']}")
-            print(f"   Confidence: {rec['confidence']}%")
-            print(f"   Current Price: ₹{rec['current_price']}")
-            print(f"   Target: ₹{rec['target_price']}")
-            print()
-        else:
-            print(f"❌ {commodity}: {analysis.get('message', 'Analysis failed')}\n")
-    
-    print("="*60)
-    print("Analysis complete!")
-    print("="*60)
+    print("\n🎉 Analysis complete!")
 
 if __name__ == "__main__":
     main()

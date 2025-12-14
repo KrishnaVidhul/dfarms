@@ -241,7 +241,8 @@ export async function getMarketPricesByFilters(filters: {
             paramIndex++;
         }
 
-        query += ' ORDER BY arrival_date DESC, commodity ASC';
+        // Sort by latest arrival date first to show most recent market data
+        query += ' ORDER BY arrival_date DESC, fetched_at DESC';
 
         if (filters.limit) {
             query += ` LIMIT $${paramIndex}`;

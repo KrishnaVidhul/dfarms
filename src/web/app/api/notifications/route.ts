@@ -7,9 +7,11 @@ export async function GET() {
     try {
         // 1. Fetch Low Stock Alerts (< 500kg)
         // Adjust threshold as needed
+        // 1. Fetch Low Stock Alerts (< 500kg)
+        // Adjust threshold as needed
         const lowStockQuery = `
-            SELECT id, batch_number, commodity_id, quantity, 'low_stock' as type, created_at
-            FROM inventory_batches 
+            SELECT id, batch_code, commodity_id, quantity, 'low_stock' as type, created_at
+            FROM batches 
             WHERE quantity < 500
             ORDER BY created_at DESC
             LIMIT 5
@@ -18,9 +20,9 @@ export async function GET() {
 
         // 2. Fetch Recent Agent Jobs
         const agentJobsQuery = `
-            SELECT id, agent_id, task_type, status, result_summary, updated_at, 'agent_update' as type
+            SELECT id, command, status, result, updated_at, 'agent_update' as type
             FROM agent_jobs
-            WHERE status IN ('completed', 'failed')
+            WHERE status IN ('COMPLETED', 'FAILED')
             ORDER BY updated_at DESC
             LIMIT 5
         `;
@@ -34,7 +36,7 @@ export async function GET() {
             for (const row of lowStockResult.rows) {
                 // Determine commodity name (basic mapping or generic)
                 // In a real app, we'd join with commodities table.
-                const title = `Low Stock Alert: Batch ${row.batch_number}`;
+                const title = `Low Stock Alert: Batch ${row.batch_code}`;
                 const message = `Quantity is critical: ${row.quantity}kg`;
 
                 notifications.push({
@@ -51,9 +53,11 @@ export async function GET() {
         // Map Agent Updates
         if (agentJobsResult.rows) {
             for (const row of agentJobsResult.rows) {
-                const isSuccess = row.status === 'completed';
+                const isSuccess = row.status === 'COMPLETED';
                 const title = isSuccess ? 'Agent Task Completed' : 'Agent Task Failed';
-                const message = row.result_summary || `Task ${row.task_type} finished.`;
+                // Truncate command if too long
+                const cmdClean = row.command.length > 30 ? row.command.substring(0, 30) + '...' : row.command;
+                const message = row.result || `Task "${cmdClean}" finished.`;
 
                 notifications.push({
                     id: `agent-${row.id}`,

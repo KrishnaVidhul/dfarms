@@ -47,6 +47,14 @@ export default function MarketPage() {
 
             const res = await fetch(`/api/market?${params}`);
             const data = await res.json();
+            console.log('Market Data API Response:', {
+                count: data.prices?.length,
+                first5Dates: data.prices?.slice(0, 5).map((p: any) => ({
+                    commodity: p.commodity,
+                    market: p.market_name,
+                    date: p.arrival_date
+                }))
+            });
             setMarketData(data.prices || []);
         } catch (err) {
             console.error('Error fetching market data:', err);
@@ -235,7 +243,7 @@ export default function MarketPage() {
                                             {item.max_price ? `₹${parseFloat(item.max_price).toFixed(2)}` : '-'}
                                         </td>
                                         <td className="px-4 py-3 text-sm text-zinc-500">
-                                            {item.arrival_date ? new Date(item.arrival_date).toLocaleDateString('en-IN') : '-'}
+                                            {item.arrival_date ? new Date(item.arrival_date).toLocaleDateString('en-IN', { timeZone: 'UTC' }) : '-'}
                                         </td>
                                     </tr>
                                 ))
