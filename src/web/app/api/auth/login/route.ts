@@ -7,8 +7,6 @@ export async function POST(request: Request) {
     try {
         const { username, password } = await request.json();
 
-        console.log(`Login attempt for: ${username}`);
-
         if (!password) {
             return NextResponse.json({ error: 'Missing credentials' }, { status: 400 });
         }
@@ -16,7 +14,6 @@ export async function POST(request: Request) {
         const res = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
 
         if (res.rows.length === 0) {
-            console.log(`Login failed: User ${username} not found`);
             return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
         }
 
@@ -30,25 +27,22 @@ export async function POST(request: Request) {
         }
 
         if (!isValid) {
-            console.log(`Login failed: Invalid password for ${username}`);
             return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
         }
 
-        console.log(`Login success for: ${username}, role: ${user.role}`);
-
-        // Generate JWT Session
+        // Generate JWT Session with Tenant ID
         const token = await signSession({
             sub: user.id,
             username: user.username,
-            role: user.role
+            role: user.role,
+            tenant_id: user.tenant_id // Critical for data isolation
         });
 
         const response = NextResponse.json({ success: true, role: user.role });
         const isProduction = process.env.NODE_ENV === 'production';
 
-        // Set Secure HTTP-Only Cookie
         response.cookies.set({
-            name: 'session', // Standard name
+            name: 'session',
             value: token,
             httpOnly: true,
             path: '/',
@@ -57,13 +51,10 @@ export async function POST(request: Request) {
             maxAge: 60 * 60 * 24, // 24 hours
         });
 
-        // Clean up legacy insecurity if it exists
-        response.cookies.delete('auth_role');
-
         return response;
 
     } catch (error: any) {
-        console.error('Login Route Critical Error:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
-        return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
+        console.error('Login Route Critical Error:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
